@@ -63,6 +63,6 @@ class HomeController extends BaseController
     {
         $ltiConfig = new LtiConfig();
         $configFile = $ltiConfig->createConfigFile();
-        return response($configFile, 200)->header('Content-Type', 'text/xml');
+        return response()->json($configFile, 200);
     }
 }
