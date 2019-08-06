@@ -24,6 +24,7 @@ class LtiConfig {
         $this->launchUrl = $this->appUrl . '/index.php/assessment';
         $this->navUrl = $this->appUrl . '/index.php/home';
         $this->selectUrl = $this->appUrl . '/index.php/select';
+        $this->oidcUrl = $this->appUrl . '/index.php/logininitiations';
         $this->titleText = 'Quick Check';
         if ($this->environment !== 'prod') {
             //for alternate environments, add environment name in parentheses to title
@@ -71,7 +72,7 @@ class LtiConfig {
                             ],
                             [
                                 "text" => $this->titleText,
-                                "enabled" => false,
+                                "enabled" => true,
                                 "icon_url" => $this->iconUrl,
                                 "placement" => "course_navigation",
                                 "message_type" => "LtiResourceLinkRequest",
@@ -109,7 +110,7 @@ class LtiConfig {
                 'custom_canvas_user_login_id' => '$Canvas.user.loginId'
             ],
             "target_link_uri" => $this->launchUrl,
-            "oidc_initiation_url" => $this->appUrl . '/index.php/login_initiations'
+            "oidc_initiation_url" => $this->oidcUrl
         ];
     }
 }

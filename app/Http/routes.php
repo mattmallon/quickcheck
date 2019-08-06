@@ -21,6 +21,8 @@ Route::post('assessment/', 'AssessmentController@showLTI'); //id included as que
 
 //LTI config
 Route::get('lticonfig', 'HomeController@returnLtiConfig');
+Route::post('logininitiations', 'HomeController@initializeOIDC');
+Route::post('canvasauthredirect', 'HomeController@authRedirect');
 
 //errors
 Route::get('usernotfound', 'UserController@userNotFound');
