@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Classes\LTI;
-use DOMDocument;
 
 class LtiConfig {
 
@@ -25,256 +24,93 @@ class LtiConfig {
         $this->launchUrl = $this->appUrl . '/index.php/assessment';
         $this->navUrl = $this->appUrl . '/index.php/home';
         $this->selectUrl = $this->appUrl . '/index.php/select';
+        $this->oidcUrl = $this->appUrl . '/index.php/logininitiations';
         $this->titleText = 'Quick Check';
         if ($this->environment !== 'prod') {
             //for alternate environments, add environment name in parentheses to title
             $this->titleText .= ' (' . $this->environment . ')';
         }
+        //TODO: Quick Check icon url
+        $this->iconUrl = "https://toolfinder.eds.iu.edu/storage/thumbnails/whg61rklT43ZvK3T4rZZ70reFfX8djh3akfSkkot.png";
     }
 
     /**
-    * Master function to return a config XMl file
+    * Master function to return config data
     *
     * @return DOMDocument
     */
 
     public function createConfigFile()
     {
-        $doc = new DOMDocument('1.0', 'UTF-8');
-        $doc->formatOutput = true;
-
-        $cartridge = $this->createCartridge($doc);
-        $this->addBasicInfo($doc, $cartridge);
-        $custom = $this->addCustomLaunchVars($doc, $cartridge);
-        $extensions = $this->addExtensions($doc, $cartridge);
-        $this->addFinalCartridgeInfo($doc, $cartridge);
-
-        $xmlOutput = $doc->saveXML();
-        return $xmlOutput;
-    }
-
-    /************************************************************************/
-    /* PRIVATE FUNCTIONS ****************************************************/
-    /************************************************************************/
-
-    /**
-    * Add extension for Canvas to define assignment select component
-    *
-    * @param  DOMDocument  $doc
-    * @param  DOMNode      $extensions
-    * @return void
-    */
-
-    private function addAssignmentExtension($doc, $extensions)
-    {
-        $assignment = $extensions->appendChild($doc->createElement('lticm:options'));
-        $this->addAttribute($doc, 'name', 'assignment_selection', $assignment);
-
-        $assignmentProperties = [
-            'message_type' => 'ContentItemSelectionRequest',
-            'url' => $this->selectUrl,
-            'selection_width' => '550',
-            'selection_height' => '650'
+        return [
+            "title" => $this->titleText,
+            "scopes" => [
+                "https://purl.imsglobal.org/spec/lti-ags/scope/lineitem",
+                "https://purl.imsglobal.org/spec/lti-ags/scope/result.readonly",
+                "https://purl.imsglobal.org/spec/lti-ags/scope/score",
+                "https://purl.imsglobal.org/spec/lti-nrps/scope/contextmembership.readonly",
+                "https://purl.imsglobal.org/spec/lti-ags/scope/lineitem.readonly"
+            ],
+            "privacy_level" => "public",
+            "extensions" => [
+                [
+                    "platform" => "canvas.instructure.com",
+                    "domain" => $this->domainUrl,
+                    "tool_id" => "iu-eds-quickcheck",
+                    "privacy_level" => "public",
+                    "settings" => [
+                        "text" => $this->titleText,
+                        "icon_url" => $this->iconUrl,
+                        "placements" => [
+                            [
+                                "text" => $this->titleText,
+                                "enabled" => true,
+                                "icon_url" => $this->iconUrl,
+                                "placement" => "link_selection",
+                                "message_type" => "LtiDeepLinkingRequest",
+                                "target_link_uri" => $this->selectUrl
+                            ],
+                            [
+                                "text" => $this->titleText,
+                                "enabled" => true,
+                                "icon_url" => $this->iconUrl,
+                                "placement" => "course_navigation",
+                                "message_type" => "LtiResourceLinkRequest",
+                                "target_link_uri" => $this->navUrl
+                            ],
+                            [
+                                "text" => $this->titleText,
+                                "enabled" => true,
+                                "icon_url" => $this->iconUrl,
+                                "placement" => "assignment_selection",
+                                "message_type" => "LtiDeepLinkingRequest",
+                                "target_link_uri" => $this->launchUrl
+                            ]
+                        ],
+                        "selection_width" => "1000",
+                        "selection_height" => "1000"
+                    ]
+                ]
+            ],
+            "public_jwk" => [
+                "kty" => "RSA",
+                "e" => "AQAB",
+                "use" => "sig",
+                "kid" => "1d350b99-bc40-4d91-bc49-5e7afea46604",
+                "alg" => "RS256",
+                "n" => "lOsBNJtvRhg9JUXYB7FKp9Uso95v_jU4DeRW-Qn0jXmRGDOPqkSYvFI0NNERRsceTy0PSltr7iF9E1-Jm24CDHgBn7wpWqRkG04YLy4zPMawScffEJLpWA1O2X0ssSuAxXE1M0KxjTLWBb3WJR69yxczxLaOu7UiINoGxDscR6VD6cs_rJbc9cIGK6FB1PdQm-ZZvMtVpg1-g3cWjoHznYHSnZf0fPsaqA-0CBpKfbL-VpK4TOkJxYbydESlQgbX97FteeZkX1RXMt1zlFMHfKJ5n3BsSM10dgfKtuw6E-WMuQfJmvBzQgoSnfjZhBwulyGPqUwaSy5FCBgrQIrmqw"
+            ],
+            "description" => "This tool allows embedding and taking quick checks, as well as reviewing student results through the left nav.",
+            "custom_fields" => [
+                'custom_canvas_assignment_dueat' => '$Canvas.assignment.dueAt',
+                'custom_canvas_course_id' => '$Canvas.course.id',
+                'custom_canvas_courseSection_id' => '$CourseSection.sourcedId',
+                'custom_canvas_section_id' => '$Canvas.course.sectionIds',
+                'custom_canvas_user_id' => '$Canvas.user.id',
+                'custom_canvas_user_login_id' => '$Canvas.user.loginId'
+            ],
+            "target_link_uri" => $this->launchUrl,
+            "oidc_initiation_url" => $this->oidcUrl
         ];
-
-        foreach($assignmentProperties as $name => $value) {
-            $element = $assignment->appendChild($doc->createElement('lticm:property', $value));
-            $this->addAttribute($doc, 'name', $name, $element);
-        }
-    }
-
-    /**
-    * Much easier to write one line for a function call than the 3 lines required
-    * just to add a single attribute to an xml node...curse you, xml!
-    *
-    * @param  []  $assessments
-    * @return void
-    */
-
-    private function addAttribute($doc, $attrName, $attrValue, $parent)
-    {
-        $newAttr = $doc->createAttribute($attrName);
-        $newAttr->value = $attrValue;
-        $parent->appendChild($newAttr);
-    }
-
-    /**
-    * Add basic information such as title, description, etc.
-    *
-    * @param  DOMDocument  $doc
-    * @param  DOMNode      $cartridge
-    * @return void
-    */
-
-    private function addBasicInfo($doc, $cartridge)
-    {
-        $title = $cartridge->appendChild($doc->createElement('blti:title', $this->titleText));
-
-        $descriptionText = 'This tool allows embedding and taking quick checks, as well as reviewing student results through the left nav.';
-        $description = $cartridge->appendChild($doc->createElement('blti:description', $descriptionText));
-        $icon = $cartridge->appendChild($doc->createElement('blti:icon'));
-
-        $launchUrl = $cartridge->appendChild($doc->createElement('blti:launch_url', $this->launchUrl));
-    }
-
-    /**
-    * Add custom LTI launch variables needed from Canvas
-    *
-    * @param  DOMDocument  $doc
-    * @param  DOMNode      $cartridge
-    * @return DOMNode
-    */
-
-    private function addCustomLaunchVars($doc, $cartridge)
-    {
-        $custom = $cartridge->appendChild($doc->createElement('blti:custom'));
-
-        $customVars = [
-            'custom_canvas_assignment_dueat' => '$Canvas.assignment.dueAt',
-            'custom_canvas_course_id' => '$Canvas.course.id',
-            'custom_canvas_courseSection_id' => '$CourseSection.sourcedId',
-            'custom_canvas_section_id' => '$Canvas.course.sectionIds',
-            'custom_canvas_user_id' => '$Canvas.user.id',
-            'custom_canvas_user_login_id' => '$Canvas.user.loginId'
-        ];
-
-        foreach ($customVars as $varName => $customVar) {
-            $element = $custom->appendChild($doc->createElement('lticm:property', $customVar));
-            $this->addAttribute($doc, 'name', $varName, $element);
-        }
-
-        return $custom;
-    }
-
-    /**
-    * Add custom Canvas extensions for nav, assignment selection, etc.
-    *
-    * @param  DOMDocument  $doc
-    * @param  DOMNode      $cartridge
-    * @return DOMNode
-    */
-
-    private function addExtensions($doc, $cartridge)
-    {
-        $extensions = $this->addExtensionsNode($doc, $cartridge);
-        $this->addNavExtension($doc, $extensions);
-        $this->addAssignmentExtension($doc, $extensions);
-        $this->addLinkExtension($doc, $extensions);
-        return $extensions;
-    }
-
-    /**
-    * Add extensions node for Canvas
-    *
-    * @param  DOMDocument  $doc
-    * @param  DOMNode      $cartridge
-    * @return DOMNode
-    */
-
-    private function addExtensionsNode($doc, $cartridge)
-    {
-        $extensions = $cartridge->appendChild($doc->createElement('blti:extensions'));
-        $this->addAttribute($doc, 'platform', 'canvas.instructure.com', $extensions);
-
-        $extensionProperties = [
-            'tool_id' => 'iu-eds-quickcheck',
-            'privacy_level' => 'public',
-            'domain' => $this->domainUrl
-        ];
-
-        foreach($extensionProperties as $name => $value) {
-            $element = $extensions->appendChild($doc->createElement('lticm:property', $value));
-            $this->addAttribute($doc, 'name', $name, $element);
-        }
-
-        return $extensions;
-    }
-
-    /**
-    * Add cartridge_bundle and cartridge_icon
-    *
-    * @param  DOMDocument  $doc
-    * @param  DOMNode      $cartridge
-    * @return void
-    */
-
-    private function addFinalCartridgeInfo($doc, $cartridge)
-    {
-        $bundle = $cartridge->appendChild($doc->createElement('cartridge_bundle'));
-        $this->addAttribute($doc, 'identifierref', 'BLTI001_Bundle', $bundle);
-        $cartridge_icon = $cartridge->appendChild($doc->createElement('cartridge_icon'));
-        $this->addAttribute($doc, 'identifierref', 'BLTI001_Icon', $cartridge_icon);
-    }
-
-    /**
-    * Add extension for Canvas to define link selection component (AKA module external tool link)
-    *
-    * @param  DOMDocument  $doc
-    * @param  DOMNode      $extensions
-    * @return void
-    */
-
-    private function addLinkExtension($doc, $extensions)
-    {
-        $link = $extensions->appendChild($doc->createElement('lticm:options'));
-        $this->addAttribute($doc, 'name', 'link_selection', $link);
-
-        $linkProperties = [
-            'message_type' => 'ContentItemSelectionRequest',
-            'url' => $this->selectUrl,
-            'selection_width' => '550',
-            'selection_height' => '650'
-        ];
-
-        foreach($linkProperties as $name => $value) {
-            $element = $link->appendChild($doc->createElement('lticm:property', $value));
-            $this->addAttribute($doc, 'name', $name, $element);
-        }
-    }
-
-    /**
-    * Add extension for Canvas to define nav component
-    *
-    * @param  DOMDocument  $doc
-    * @param  DOMNode      $extensions
-    * @return void
-    */
-
-    private function addNavExtension($doc, $extensions)
-    {
-        $nav = $extensions->appendChild($doc->createElement('lticm:options'));
-        $this->addAttribute($doc, 'name', 'course_navigation', $nav);
-
-        $navProperties = [
-            'url' => $this->navUrl,
-            'text' => $this->titleText,
-            'default' => 'disabled',
-            'enabled' => 'true'
-        ];
-
-        foreach($navProperties as $name => $value) {
-            $element = $nav->appendChild($doc->createElement('lticm:property', $value));
-            $this->addAttribute($doc, 'name', $name, $element);
-        }
-    }
-
-    /**
-    * Create cartridge parent tag
-    *
-    * @param  DOMDocument  $doc
-    * @return DOMNode
-    */
-
-    private function createCartridge($doc)
-    {
-        $cartridge = $doc->appendChild($doc->createElement('cartridge_basiclti_link'));
-        $this->addAttribute($doc, 'xmlns', 'http://www.imsglobal.org/xsd/imslticc_v1p0', $cartridge);
-        $this->addAttribute($doc, 'xmlns:blti', 'http://www.imsglobal.org/xsd/imsbasiclti_v1p0', $cartridge);
-        $this->addAttribute($doc, 'xmlns:lticm', 'http://www.imsglobal.org/xsd/imslticm_v1p0', $cartridge);
-        $this->addAttribute($doc, 'xmlns:lticp', 'http://www.imsglobal.org/xsd/imslticp_v1p0', $cartridge);
-        $this->addAttribute($doc, 'xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance', $cartridge);
-        $this->addAttribute($doc, 'xsi:schemaLocation', 'http://www.imsglobal.org/xsd/imslticc_v1p0 http://www.imsglobal.org/xsd/lti/ltiv1p0/imslticc_v1p0.xsd http://www.imsglobal.org/xsd/imsbasiclti_v1p0 http://www.imsglobal.org/xsd/lti/ltiv1p0/imsbasiclti_v1p0.xsd http://www.imsglobal.org/xsd/imslticm_v1p0 http://www.imsglobal.org/xsd/lti/ltiv1p0/imslticm_v1p0.xsd http://www.imsglobal.org/xsd/imslticp_v1p0 http://www.imsglobal.org/xsd/lti/ltiv1p0/imslticp_v1p0.xsd', $cartridge);
-
-        return $cartridge;
     }
 }
