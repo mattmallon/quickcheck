@@ -13,7 +13,9 @@ class ManageAuthenticate {
         $redirectUrl = false;
 
         //LTI POST launch
-        if ($request->input('lti_version')) {
+        //TODO: do we always prioritize this? The else if below for session otherwise is not going to be reached
+        //unless I switch the order around.
+        if ($request->isMethod('post')) {
             $ltiFilter = new LTIFilter($request);
             $redirectUrl = $ltiFilter->manageFilter();
         }

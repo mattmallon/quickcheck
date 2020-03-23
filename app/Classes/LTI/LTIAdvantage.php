@@ -4,6 +4,7 @@ namespace App\Classes\LTI;
 
 use Illuminate\Http\Request;
 use \Firebase\JWT\JWT;
+use \Firebase\JWT\JWK;
 use DateTime;
 
 class LTIAdvantage {
@@ -35,18 +36,18 @@ class LTIAdvantage {
     public function decodeLaunchJwt() {
         $rawJwt = $this->request->get('id_token');
         $splitJwt = explode('.', $rawJwt);
-        $this->jwtHeader = json_decode(base64_decode($splitJwt[0]), true);
-        $this->jwtBody = json_decode(base64_decode($splitJwt[1]), true);
-        $this->jwtSignature = json_decode(base64_decode($splitJwt[2]), true);
+        $this->jwtHeader = json_decode(JWT::urlsafeB64Decode($splitJwt[0]), true);
+        $this->jwtBody = json_decode(JWT::urlsafeB64Decode($splitJwt[1]), true);
+        $this->jwtSignature = json_decode(JWT::urlsafeB64Decode($splitJwt[2]), true);
         $this->iss = $this->jwtBody['iss'];
         $this->aud = $this->jwtBody['aud'][0]; //assuming this is always an array of 1?
         $this->deploymentKey = $this->iss . $this->aud;
         $this->publicKey = $this->getPublicKey();
 
         //library checks the signature, makes sure it isn't expired, etc.
-        $decodedJwt = JWT::decode($rawJwt, $this->publicKey, [$this->jwtHeader['alg']]);
+        $decodedJwt = JWT::decode($rawJwt, $this->publicKey['key'], [$this->jwtHeader['alg']]);
         $this->launchValues = (array) $decodedJwt; //returns object; coerce into array
-        //dd($this->launchValues);
+        dd($this->launchValues);
     }
 
     public function initOauthToken() {
@@ -144,7 +145,34 @@ class LTIAdvantage {
     }
 
     private function getPublicKey() {
-        return $this->getRsaKeyFromEnv('LTI_PUBLIC_KEY');
+        //this should do the trick for revolving keys with KID, but JWK is not included
+        //with the library, we're going to have to go elsewhere. Original used a random
+        //file on github that does not look very reputable, even though it does work...
+        //TODO: change Canvas instance based on current url or .env or what-have-you
+        $publicKeyUrl = 'https://canvas.test.instructure.com/api/lti/security/jwks';
+        $existingKID = $this->request->session()->get('KID');
+        $launchKID = $this->jwtHeader['kid'];
+        if ($launchKID != $existingKID) {
+            $publicKeyJson = file_get_contents($publicKeyUrl);
+            $publicKeySet = json_decode($publicKeyJson, true);
+            $parsedPublicKeySet = JWK::parseKeySet($publicKeySet);
+            foreach($parsedPublicKeySet as $kid => $publicKeyItem) {
+                if ($kid == $launchKID) {
+                    $publicKey = openssl_pkey_get_details($publicKeyItem);
+                    $this->publicKey = $publicKey;
+                    $this->request->session()->put('KID', $launchKID);
+                    $this->request->session()->put('publicKey', $publicKey);
+                }
+            }
+        }
+
+        $this->publicKey = $this->request->session()->get('publicKey');
+
+        if (!$this->publicKey) {
+            abort(500, 'No public key found');
+        }
+
+        return $this->publicKey;
     }
 
     private function curlGet($url, $tokenHeader) {
@@ -184,9 +212,14 @@ class LTIAdvantage {
 
     private function getRsaKeyFromEnv($envVar) {
         $initialValue = env($envVar);
+        //dd(base64_decode($initialValue));
+        //return base64_decode($initialValue);
+        //$initialValue = base64_decode($initialValue);
         #source for this tomfoolery:
         #https://laracasts.com/discuss/channels/general-discussion/multi-line-environment-variable
-        $parsedValue = str_replace('\\n', "\n", $initialValue);
+        //$parsedValue = str_replace('\\n', "\n", $initialValue);
+        $parsedValue = str_replace('\n', '', $initialValue);
+        //dd($parsedValue);
         return $parsedValue;
     }
 }

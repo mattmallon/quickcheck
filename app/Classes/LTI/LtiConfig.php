@@ -32,6 +32,8 @@ class LtiConfig {
         }
         //TODO: Quick Check icon url
         $this->iconUrl = "https://toolfinder.eds.iu.edu/storage/thumbnails/whg61rklT43ZvK3T4rZZ70reFfX8djh3akfSkkot.png";
+        $this->selectionWidth = 550;
+        $this->selectionHeight = 750;
     }
 
     /**
@@ -65,14 +67,7 @@ class LtiConfig {
                             [
                                 "text" => $this->titleText,
                                 "enabled" => true,
-                                "icon_url" => $this->iconUrl,
-                                "placement" => "link_selection",
-                                "message_type" => "LtiDeepLinkingRequest",
-                                "target_link_uri" => $this->selectUrl
-                            ],
-                            [
-                                "text" => $this->titleText,
-                                "enabled" => true,
+                                "default" => "disabled",
                                 "icon_url" => $this->iconUrl,
                                 "placement" => "course_navigation",
                                 "message_type" => "LtiResourceLinkRequest",
@@ -84,11 +79,31 @@ class LtiConfig {
                                 "icon_url" => $this->iconUrl,
                                 "placement" => "assignment_selection",
                                 "message_type" => "LtiDeepLinkingRequest",
-                                "target_link_uri" => $this->launchUrl
+                                "target_link_uri" => $this->selectUrl,
+                                "selection_width" => $this->selectionWidth,
+                                "selection_height" => $this->selectionHeight
+                            ],
+                            [
+                                "text" => $this->titleText,
+                                "enabled" => true,
+                                "icon_url" => $this->iconUrl,
+                                "placement" => "link_selection",
+                                "message_type" => "LtiDeepLinkingRequest",
+                                "target_link_uri" => $this->selectUrl,
+                                "selection_width" => $this->selectionWidth,
+                                "selection_height" => $this->selectionHeight
+                            ],
+                            [
+                                "text" => $this->titleText,
+                                "enabled" => true,
+                                "icon_url" => $this->iconUrl,
+                                "placement" => "editor_button",
+                                "message_type" => "LtiDeepLinkingRequest",
+                                "url" => $this->selectUrl,
+                                "selection_width" => $this->selectionWidth,
+                                "selection_height" => $this->selectionHeight
                             ]
-                        ],
-                        "selection_width" => "1000",
-                        "selection_height" => "1000"
+                        ]
                     ]
                 ]
             ],
@@ -96,9 +111,9 @@ class LtiConfig {
                 "kty" => "RSA",
                 "e" => "AQAB",
                 "use" => "sig",
-                "kid" => "1d350b99-bc40-4d91-bc49-5e7afea46604",
+                "kid" => env('LTI_JWK_KID'),
                 "alg" => "RS256",
-                "n" => "lOsBNJtvRhg9JUXYB7FKp9Uso95v_jU4DeRW-Qn0jXmRGDOPqkSYvFI0NNERRsceTy0PSltr7iF9E1-Jm24CDHgBn7wpWqRkG04YLy4zPMawScffEJLpWA1O2X0ssSuAxXE1M0KxjTLWBb3WJR69yxczxLaOu7UiINoGxDscR6VD6cs_rJbc9cIGK6FB1PdQm-ZZvMtVpg1-g3cWjoHznYHSnZf0fPsaqA-0CBpKfbL-VpK4TOkJxYbydESlQgbX97FteeZkX1RXMt1zlFMHfKJ5n3BsSM10dgfKtuw6E-WMuQfJmvBzQgoSnfjZhBwulyGPqUwaSy5FCBgrQIrmqw"
+                "n" => env('LTI_JWK_N')
             ],
             "description" => "This tool allows embedding and taking quick checks, as well as reviewing student results through the left nav.",
             "custom_fields" => [

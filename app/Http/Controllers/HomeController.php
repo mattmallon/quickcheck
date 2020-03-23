@@ -11,19 +11,6 @@ class HomeController extends BaseController
     /************************************************************************/
 
     /**
-    * Receive oauth redirect from platform after OIDC initialization completes round-trip
-    *
-    * @return response
-    */
-
-    public function authRedirect(Request $request)
-    {
-        echo 'getting here?';
-        dd($request);
-        return;
-    }
-
-    /**
     * Show the home page in the manage view.
     * For students, return the view with released results.
     * For instructors logged in via LTI, show instructor home with contextId attached as query param.
@@ -81,6 +68,8 @@ class HomeController extends BaseController
         //TODO: add validation to make sure all values are present and not null
         $iss = $request->input('iss');
         $loginHint = $request->input('login_hint');
+        //NOTE: the target link uri is specific to the resource, so if launching from nav, it's the nav launch url
+        //rather than the default target link uri set on the tool, so that's good news.
         $targetLinkUri = $request->input('target_link_uri');
         $ltiMessageHint = $request->input('lti_message_hint');
 
@@ -89,7 +78,6 @@ class HomeController extends BaseController
         }
 
         $redirectUrl = $iss . '/api/lti/authorize_redirect';
-        //$redirectUrl = 'https://canvas.instructure.com/api/lti/authorize_redirect';
 
         //TODO: does this happen on EVERY LTI launch? So would we potentially have
         //a race condition in the session if multiple tabs opened in quick succession?
@@ -107,8 +95,7 @@ class HomeController extends BaseController
             'response_mode' => 'form_post', // OIDC response is always a form post
             'prompt' => 'none', // don't prompt user on redirect
             'client_id' => env('LTI_CLIENT_ID'), //registered developer key ID in Canvas
-            //'redirect_uri' => $targetLinkUri,
-            'redirect_uri' => env('APP_URL') . '/canvasauthredirect',
+            'redirect_uri' => $targetLinkUri,
             'state' => $state,
             'nonce' => $nonce,
             'login_hint' => $loginHint,

@@ -2,6 +2,7 @@
 
 namespace App\Classes\LTI;
 use App\Classes\LTI\BLTI;
+use App\Classes\LTI\LTIAdvantage;
 use Session;
 use Illuminate\Http\Request;
 use App\Models\CourseContext;
@@ -219,12 +220,15 @@ class LtiContext {
 
     public function initContext(Request $request)
     {
-        $secret = env('LTI_SECRET');
-        $context = new BLTI();
-        $this->validateLaunch($request); //ensure all LTI params are present before trying to initialize
-        $context->init($secret, $request, $this->requiredParams);
-        $this->initUserContext($request);
-        $this->initCourseContext($request);
+
+        $lti = new LTIAdvantage();
+        //original:
+        // $secret = env('LTI_SECRET');
+        // $context = new BLTI();
+        // $this->validateLaunch($request); //ensure all LTI params are present before trying to initialize
+        // $context->init($secret, $request, $this->requiredParams);
+        // $this->initUserContext($request);
+        // $this->initCourseContext($request);
     }
 
     /**
