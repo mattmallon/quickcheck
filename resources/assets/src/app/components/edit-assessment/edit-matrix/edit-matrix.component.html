@@ -60,7 +60,7 @@
                     <div class="checkbox">
                         <p class="sr-only" id="matrixrow-{{row.id}}-column-{{column.id}}">Check this box to match {{row.answer_text}} to {{column.answer_text}}</p>
                         <label>
-                            <input type="checkbox" name="{{row.id}}" value="{{column.answer_text}}"
+                            <input type="radio" name="{{row.id}}" value="{{column.answer_text}}"
                                 [checked]="row.columnAnswerId == column.id"
                                 (click)='this.onSelect(column.id, row)'
                                 [attr.aria-labelledby]="'matrixrow-' + row.id + '-column-' + column.id"

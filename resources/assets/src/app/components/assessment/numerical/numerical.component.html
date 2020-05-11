@@ -4,6 +4,7 @@
         <label for="numerical-answer-box">Type your answer here</label>
         <input type="number" step="any" class="form-control"
             [(ngModel)]="this.answer"
+            [attr.tabindex]="this.modalVisible ? -1 : 0"
             (ngModelChange)="this.onInput()"
             id="numerical-answer-box">
     </div>

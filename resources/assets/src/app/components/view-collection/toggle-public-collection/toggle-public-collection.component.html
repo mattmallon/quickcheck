@@ -1,5 +1,5 @@
 <div class="form-group">
-    <button class="btn qc-btn qc-toggle-public-btn"
+    <button class="btn qc-btn qc-toggle-public-btn" type="button"
         [ngClass]="this.isPublicCollection() ? 'btn-danger' : 'btn-primary'" (click)="this.togglePublicCollection()">
         <span *ngIf="this.isPublicCollection()">
             <span class="fa fa-remove"></span> Make set private

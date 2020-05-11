@@ -4,6 +4,7 @@
         <label for="textmatch-answer-box">Type your answer here</label>
         <input type="text" class="form-control"
             [(ngModel)]="this.answer"
+            [attr.tabindex]="this.modalVisible ? -1 : 0"
             (ngModelChange)="this.onInput()"
             id="textmatch-answer-box">
     </div>

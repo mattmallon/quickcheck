@@ -121,7 +121,7 @@
                                         <td *ngFor="let column of currentQuestion.columns" [ngClass]="{'qc-correct-answer-marked': this.isMatrixAnswerCorrect(row, column)}">
                                             <div class="checkbox">
                                                 <label class="sr-only" for="matrixrow-{{row.id}}-column-{{column.id}}">Check this box to match {{row.answer_text}} to {{column.answer_text}}</label>
-                                                <input type="checkbox" name="{{row.id}}" value="{{column.answer_text}}" disabled
+                                                <input type="radio" name="{{row.id}}" value="{{column.answer_text}}" disabled
                                                 [checked]="row.studentAnswer.id == column.id"
                                                 id="matrixrow-{{row.id}}-column-{{column.id}}">
                                                 <span *ngIf="this.isMatrixAnswerCorrect(row, column)" class="qc-correct-text"> <span class="fa fa-long-arrow-left fa-lg" aria-hidden="true"></span> Correct answer</span>

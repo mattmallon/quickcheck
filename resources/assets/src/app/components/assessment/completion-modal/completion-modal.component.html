@@ -10,7 +10,7 @@
             <h2 *ngIf="this.isUngraded()" class="qc-ungraded-msg">This attempt was not graded.</h2>
             <h2 class="qc-final-score">Score: {{ this.score }} / {{ this.pointsPossible }} questions correct</h2>
             <qc-checkmark></qc-checkmark>
-            <p><button class="btn btn-lg qc-btn-restart-assessment qc-btn" (click)="this.restart()">Restart the quick check</button></p>
+            <p><button class="btn btn-lg qc-btn-restart-assessment qc-btn" (click)="this.restart()" type="button">Restart the quick check</button></p>
             <p *ngIf="this.isInModule" class="qc-module-msg">Or, click the "next" button in Canvas to continue.</p>
         </div>
         <div *ngIf="this.loading">
@@ -20,7 +20,7 @@
         <div *ngIf="this.error">
             <h2>Uh-oh: error saving grade.</h2>
             <p class="lead">{{ this.error }}</p>
-            <p><button class="btn btn-lg btn-outline-dark qc-btn" (click)="this.submitGrade()">Try again</button></p>
+            <p><button class="btn btn-lg btn-outline-dark qc-btn" (click)="this.submitGrade()" type="button">Try again</button></p>
         </div>
     </div>
 </div>

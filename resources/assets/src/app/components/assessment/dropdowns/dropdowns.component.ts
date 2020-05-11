@@ -8,6 +8,7 @@ import { UtilitiesService } from '../../../services/utilities.service';
 })
 export class DropdownsComponent implements OnInit {
   @Input() currentQuestion;
+  @Input() modalVisible;
   @Output() onAnswerSelection = new EventEmitter();
 
   prompts = [];

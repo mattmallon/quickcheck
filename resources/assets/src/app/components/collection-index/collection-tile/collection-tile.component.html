@@ -22,7 +22,7 @@
             </div>
             <div class="col-6">
                 <a *ngIf="this.utilitiesService.isLti" [routerLink]="'/collection/' + this.collection.id" queryParamsHandling="preserve" target="_blank">
-                    <button type="button qc-btn" class="btn qc-view-new-tab-btn"><span class="fa fa-mail-forward" aria-hidden="true"></span> View<span class="sr-only"> set {{ this.collection.name }}</span> in new tab</button>
+                    <button type="button" class="btn qc-view-new-tab-btn"><span class="fa fa-mail-forward" aria-hidden="true"></span> View<span class="sr-only"> set {{ this.collection.name }}</span> in new tab</button>
                 </a>
             </div>
         </div>

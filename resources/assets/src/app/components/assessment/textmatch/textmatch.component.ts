@@ -8,6 +8,7 @@ import { UtilitiesService } from '../../../services/utilities.service';
 })
 export class TextmatchComponent implements OnInit {
   @Input() currentQuestion;
+  @Input() modalVisible;
   @Output() onAnswerSelection = new EventEmitter();
 
   answer = null;

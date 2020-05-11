@@ -17,7 +17,7 @@
             </div>
             <div class="col-2 offset-4 col-md-3 offset-md-6">
                 <div class="form-group">
-                    <button class="btn btn-lg btn-outline-dark qc-btn qc-view-public-btn" (click)="this.togglePublicCollectionVisibility()">
+                    <button class="btn btn-lg btn-outline-dark qc-btn qc-view-public-btn" (click)="this.togglePublicCollectionVisibility()" type="button">
                         <span *ngIf="!this.publicCollectionsVisible">Show </span>
                         <span *ngIf="this.publicCollectionsVisible">Hide </span>
                         public sets

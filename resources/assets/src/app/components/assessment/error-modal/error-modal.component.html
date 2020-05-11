@@ -6,6 +6,6 @@
         <h2>There was an error processing your request.</h2>
         <p class="lead" [innerHTML]="this.errorMessage | safe: 'html'"></p>
         <p *ngIf="this.utilitiesService.isIU()">If the problem persists, please <a href="https://kb.iu.edu/d/abxl" target="_blank">contact the support center.</a></p>
-        <button class="btn btn-secondary btn-block qc-btn" *ngIf="this.showRestartBtn" (click)="this.onRestart()">Restart</button>
+        <button class="btn btn-secondary btn-block qc-btn" *ngIf="this.showRestartBtn" (click)="this.onRestart()" type="button">Restart</button>
     </div>
 </div>

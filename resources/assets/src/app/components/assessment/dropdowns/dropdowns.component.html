@@ -11,13 +11,15 @@
     </div>
     <div class="row">
         <div class="col-12">
+            <p class="sr-only">Note for screenreader users: in this question type, answers are removed as possibilities after they have been selected. If you selected an answer by mistake, please reset the combo box to the blank option to allow the answer to be used again.</p>
             <span *ngFor="let prompt of this.prompts | orderBy: 'answer_order'" class="qc-dropdown-section">
                 <label [innerHTML]="prompt.answer_text | safe: 'html'" for="{{'select-' + prompt.id}}"></label>
                 <select [(ngModel)]="prompt.selected_answer"
                     (ngModelChange)="this.onAnswerSelected(prompt)"
                     class="form-control"
                     id="{{'select-' + prompt.id}}"
-                    [attr.aria-described-by]="this.getSelectableAnswerTextById(prompt.selected_answer)">
+                    [attr.aria-described-by]="this.getSelectableAnswerTextById(prompt.selected_answer)"
+                    [attr.tabindex]="this.modalVisible ? -1 : 0">
                     <option></option> <!-- blank option -->
                     <option *ngFor="let selectableAnswer of this.selectableAnswers"
                             value="{{selectableAnswer.id}}"

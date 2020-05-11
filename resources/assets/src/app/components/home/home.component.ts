@@ -34,6 +34,7 @@ export class HomeComponent implements OnInit {
       this.utilitiesService.setError(errorMessage);
     }
 
+    this.utilitiesService.loadingFinished();
     this.utilitiesService.setLtiHeight();
   }
 

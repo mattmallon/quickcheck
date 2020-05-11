@@ -1,12 +1,14 @@
 <div class="qc-mc-options">
     <fieldset>
-        <legend class="lead qc-assessment-question" [innerHTML]="this.currentQuestion.question_text | safe: 'html'"></legend>
+        <div class="lead qc-assessment-question" [innerHTML]="this.currentQuestion.question_text | safe: 'html'"></div>
+        <legend class="sr-only">Multiple choice question</legend>
         <div class="form-check qc-assessment-multiple-choice-option" *ngFor="let answerOption of this.currentQuestion.options">
             <input type="radio" name="{{this.currentQuestion.id}}" class="form-check-input"
                     value="{{answerOption.answer_text}}"
                     id="{{answerOption.id}}"
                     [checked]="false"
-                    (click)="this.onAnswerSelected(answerOption)">
+                    (click)="this.onAnswerSelected(answerOption)"
+                    [attr.tabindex]="this.modalVisible ? -1 : 0">
             <label [innerHTML]="answerOption.answer_text | safe: 'html'" for="{{answerOption.id}}" class="form-check-label"></label>
         </div>
     </fieldset>

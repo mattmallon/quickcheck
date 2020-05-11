@@ -7,7 +7,7 @@
         <qc-nav [currentPage]="this.currentPage"></qc-nav>
         <div class="row">
             <div class="col-12 col-sm-7 qc-home-hero">
-                <button class="btn qc-hero-add-btn" (click)="this.addAssessment()" [hidden]="this.isAddingAssessment">Add Quick Check</button>
+                <button class="btn qc-hero-add-btn" (click)="this.addAssessment()" [hidden]="this.isAddingAssessment" type="button">Add Quick Check</button>
                 <qc-quick-add *ngIf="this.isAddingAssessment"
                     (onCancel)="this.cancelAdd($event)"
                     [utilitiesService]="this.utilitiesService">

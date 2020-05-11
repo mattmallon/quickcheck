@@ -1,10 +1,12 @@
 <div class="qc-mcorrect-options">
     <fieldset>
-        <legend class="lead qc-assessment-question" [innerHTML]="this.currentQuestion.question_text | safe: 'html'"></legend>
+        <div class="lead qc-assessment-question" [innerHTML]="this.currentQuestion.question_text | safe: 'html'"></div>
+        <legend class="sr-only">Multiple correct question</legend>
         <div class="form-check qc-assessment-multiple-correct-option" *ngFor="let answerOption of this.currentQuestion.options">
             <input type="checkbox" name="{{this.currentQuestion.id}}" value="{{answerOption.answer_text}}" [checked]="false"
                 id="{{answerOption.id}}"
                 [(ngModel)]="answerOption.selected"
+                [attr.tabindex]="this.modalVisible ? -1 : 0"
                 (click)='this.onAnswerSelected(answerOption)'>
             <label [innerHTML]="answerOption.answer_text | safe: 'html'" for="{{answerOption.id}}"></label>
         </div>

@@ -12,7 +12,7 @@
                     </li>
                 </ul>
             </div>
-            <button type="button" class="btn btn-lg qc-btn"
+            <button type="button" class="btn btn-lg qc-btn qc-row-continue-btn"
                 [ngClass]="{'btn-success': this.isCorrect, 'btn-danger': !this.isCorrect}"
                 (click)="this.next()"
                 [disabled]="this.isNextBtnDisabled">

@@ -250,7 +250,7 @@ export class AssessmentComponent implements OnInit {
     };
     this.modalService.show(CompletionModalComponent, {initialState, backdrop: 'static', keyboard: false});
     this.modalVisible = true;
-    this.utilitiesService.focusToElement('.qc-btn-restart-assessment');
+    this.utilitiesService.focusToElement('#qc-completion-modal');
   }
 
   parseCaliperData(data) {
@@ -319,7 +319,7 @@ export class AssessmentComponent implements OnInit {
       this.modalService.show(FeedbackModalComponent, {initialState, backdrop: 'static', keyboard: false});
       this.modalVisible = true;
       this.utilitiesService.formatMath(); //if equations are shown in the feedback
-      this.utilitiesService.focusToElement('.qc-feedback-modal');
+      this.utilitiesService.focusToElement('#qc-feedback-modal');
     }
   }
 

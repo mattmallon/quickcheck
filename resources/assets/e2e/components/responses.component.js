@@ -22,7 +22,7 @@ var ResponsesComponent = function(browserRef) {
     component.matchingCorrectAnswers = 'tbody tr td:last-of-type';
     component.matchingPrompts = 'label';
     component.matrixCell = 'tbody tr td:not(:first-of-type)';
-    component.matrixCheckboxes = 'input[type="checkbox"]';
+    component.matrixCheckboxes = 'input[type="radio"]';
     component.matrixColumns = '.qc-responses-matrix-column';
     component.matrixRows = 'tbody tr td:first-of-type';
     component.mcOptions = '.qc-responses-multiple-choice-option';

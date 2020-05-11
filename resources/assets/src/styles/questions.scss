@@ -44,6 +44,7 @@
     }
 
     input {
+        /* MM, 4/7/20: changed to radio, but keeping this style here in case we change it back later */
         &[type='checkbox'] {
             display: inline-block;
             margin-left: 0;

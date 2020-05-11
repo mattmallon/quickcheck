@@ -19,12 +19,11 @@
                 </td>
                 <td *ngFor="let column of row.columns">
                     <div class="form-check">
-                        <label class="sr-only" for="matrixrow-{{row.id}}-column-{{column.id}}">Check this box to match {{row.answer_text}} to {{column.answer_text}}</label>
-                        <input type="checkbox" name="{{row.id}}" value="{{column.answer_text}}"
+                        <input type="radio" name="{{row.id}}" value="{{column.answer_text}}"
                             [checked]="false"
-                            [(ngModel)]="column.selected"
                             (click)='this.onAnswerSelected(row, column)'
                             [attr.aria-invalid]="!this.checkRowCorrectness(row) ? 'true' : 'false'"
+                            [attr.aria-label]="'Match ' + row.answer_text + ' to ' + column.answer_text"
                             id="matrixrow-{{row.id}}-column-{{column.id}}">
                     </div>
                 </td>
