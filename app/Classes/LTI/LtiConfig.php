@@ -118,8 +118,10 @@ class LtiConfig {
             "description" => "This tool allows embedding and taking quick checks, as well as reviewing student results through the left nav.",
             "custom_fields" => [
                 'custom_canvas_assignment_dueat' => '$Canvas.assignment.dueAt',
+                'custom_canvas_assignment_id' => '$Canvas.assignment.id',
+                'custom_canvas_assignment_title' => '$Canvas.assignment.title',
                 'custom_canvas_course_id' => '$Canvas.course.id',
-                'custom_canvas_courseSection_id' => '$CourseSection.sourcedId',
+                'custom_canvas_coursesection_id' => '$CourseSection.sourcedId',
                 'custom_canvas_section_id' => '$Canvas.course.sectionIds',
                 'custom_canvas_user_id' => '$Canvas.user.id',
                 'custom_canvas_user_login_id' => '$Canvas.user.loginId'

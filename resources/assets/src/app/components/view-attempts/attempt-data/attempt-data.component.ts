@@ -88,7 +88,7 @@ export class AttemptDataComponent implements OnInit {
   }
 
   isFirstRowForStudent(attempt) {
-    var key = 'user-' + attempt.student.lti_user_id; //in case the user id starts with an int
+    var key = 'user-' + attempt.student.lti_custom_user_id; //in case the user id starts with an int
     if (this.studentsWithFirstRow[key]) {
       return false;
     }

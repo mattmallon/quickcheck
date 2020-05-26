@@ -10,7 +10,8 @@ class CourseContext extends Eloquent {
     protected $fillable = [
         "lti_context_id",
         "lti_custom_course_id",
-        "time_zone"
+        "time_zone",
+        "lis_course_offering_sourcedid"
     ];
 
     public function attempts() {
@@ -50,6 +51,17 @@ class CourseContext extends Eloquent {
     }
 
     /**
+    * Get the sourced ID of the course
+    *
+    * @return string
+    */
+
+    public function getCourseOfferingSourcedid()
+    {
+        return $this->lis_course_offering_sourcedid;
+    }
+
+    /**
     * Get the time zone of the course context
     *
     * @return string
@@ -63,24 +75,31 @@ class CourseContext extends Eloquent {
     /**
     * Initialize a new course context
     *
-    * @param  Request  $request
+    * @param  string $contextId
+    * @param  string $courseId
+    * @param  string $sourcedId
     * @return void
     */
 
-    public function initialize(Request $request)
+    public function initialize($contextId, $courseId, $sourcedId)
     {
-        $validator = Validator::make($request->all(), [
-            'context_id' => 'required',
-            'custom_canvas_course_id' => 'required'
-        ]);
-        if ($validator->fails()) {
-            $error = 'Unable to initialize course context, required LTI data not supplied on launch.';
-            abort(400, $error);
-        }
+        $this->lti_context_id = $contextId;
+        $this->lti_custom_course_id = $courseId;
+        $this->lis_course_offering_sourcedid = $sourcedId;
+        $this->time_zone = $this->getCourseTimeZoneFromAPI($courseId);
+        $this->save();
+    }
 
-        $this->lti_context_id = $request->context_id;
-        $this->lti_custom_course_id = $request->custom_canvas_course_id;
-        $this->time_zone = $this->getCourseTimeZoneFromAPI($request->custom_canvas_course_id);
+    /**
+    * Update an existing course to add a sourced ID, which was not formerly saved on this model
+    *
+    * @param  string $sourcedId
+    * @return void
+    */
+
+    public function setCourseOfferingSourcedid($sourcedId)
+    {
+        $this->lis_course_offering_sourcedid = $sourcedId;
         $this->save();
     }
 

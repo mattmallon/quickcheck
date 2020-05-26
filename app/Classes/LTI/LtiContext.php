@@ -3,6 +3,7 @@
 namespace App\Classes\LTI;
 use App\Classes\LTI\BLTI;
 use App\Classes\LTI\LTIAdvantage;
+use Log;
 use Session;
 use Illuminate\Http\Request;
 use App\Models\CourseContext;
@@ -14,23 +15,36 @@ use App\Exceptions\SessionMissingLtiContextException;
 
 class LtiContext {
 
-    private $assessmentsContextKey = 'currentAssessments';
-    private $courseContextKey = 'courseContexts';
-    private $studentContextKey = 'studentContext';
-    private $requiredParams = [
-        'context_id',
-        'custom_canvas_course_id',
-        'custom_canvas_user_id',
-        'custom_canvas_user_login_id',
-        'lis_person_name_family',
-        'lis_person_name_given',
-        'oauth_consumer_key',
-        'user_id'
-    ];
+    private $contextKey = "https://purl.imsglobal.org/spec/lti/claim/context";
+    private $customKey = "https://purl.imsglobal.org/spec/lti/claim/custom";
+    private $lisKey = "https://purl.imsglobal.org/spec/lti/claim/lis";
+    private $namesRolesServiceKey = "https://purl.imsglobal.org/spec/lti-nrps/claim/namesroleservice";
+    private $resourceLinkKey = "https://purl.imsglobal.org/spec/lti/claim/resource_link";
+    private $rolesKey = "https://purl.imsglobal.org/spec/lti/claim/roles";
+
+    private $launchValues = [];
 
     /************************************************************************/
     /* PUBLIC FUNCTIONS *****************************************************/
     /************************************************************************/
+
+    public function getAssignmentId()
+    {
+        if (!$this->launchValues) {
+            return false;
+        }
+
+        return $this->launchValues[$this->customKey]['canvas_assignment_id'];
+    }
+
+    public function getAssignmentTitle()
+    {
+        if (!$this->launchValues) {
+            return false;
+        }
+
+        return $this->launchValues[$this->customKey]['canvas_assignment_title'];
+    }
 
     /**
     * When recording a new attempt, and the user has made previous attempts on the
@@ -40,6 +54,8 @@ class LtiContext {
     * @param  int  $assessmentId
     * @return [] $attemptData
     */
+
+   //TODO: delete this function after new structure is in place to create attempt with launch values
 
     public function getAttemptDataFromSession(Request $request, $assessmentId)
     {
@@ -62,14 +78,22 @@ class LtiContext {
     * @return string $context_id
     */
 
-    public function getContextIdFromSession()
+    public function getContextId()
     {
-        if (!$this->isInLtiContext()) {
+        if (!$this->launchValues) {
             return false;
         }
 
-        $blti = new BLTI();
-        return $blti->getContextId();
+        return $this->launchValues[$this->contextKey]['id'];
+    }
+
+    public function getCourseId()
+    {
+        if (!$this->launchValues) {
+            return false;
+        }
+
+        return $this->launchValues[$this->customKey]['canvas_course_id'];
     }
 
     /**
@@ -81,7 +105,38 @@ class LtiContext {
 
     public function getCourseOfferingSourcedid($assessmentId)
     {
-        return $this->getAssessmentValueFromSession($assessmentId, 'lis_course_offering_sourcedid');
+        if (!$this->launchValues) {
+            return false;
+        }
+
+        return $this->launchValues[$this->lisKey]['course_offering_sourcedid'];
+    }
+
+    public function getDueAt()
+    {
+        if (!$this->launchValues) {
+            return false;
+        }
+
+        return $this->launchValues[$this->customKey]['canvas_assignment_dueat'];
+    }
+
+    public function getGivenName()
+    {
+        if (!$this->launchValues) {
+            return false;
+        }
+
+        return $this->launchValues['given_name'];
+    }
+
+    public function getFamilyName()
+    {
+        if (!$this->launchValues) {
+            return false;
+        }
+
+        return $this->launchValues['family_name'];
     }
 
     /**
@@ -93,7 +148,11 @@ class LtiContext {
 
     public function getNonce($assessmentId)
     {
-        return $this->getAssessmentValueFromSession($assessmentId, 'oauth_nonce');
+        if (!$this->launchValues) {
+            return false;
+        }
+
+        return $this->launchValues['nonce'];
     }
 
     /**
@@ -104,17 +163,11 @@ class LtiContext {
 
     public function getPersonSourcedid()
     {
-        $studentData = Session::get($this->studentContextKey);
-
-        if (!$studentData) {
+        if (!$this->launchValues) {
             return false;
         }
 
-        if (!array_key_exists('lis_person_sourcedid', $studentData)) {
-            return false;
-        }
-
-        return $studentData['lis_person_sourcedid'];
+        return $this->launchValues[$this->lisKey]['person_sourcedid'];
     }
 
     /**
@@ -126,7 +179,29 @@ class LtiContext {
 
     public function getResourceLinkId($assessmentId)
     {
-        return $this->getAssessmentValueFromSession($assessmentId, 'resource_link_id');
+        if (!$this->launchValues) {
+            return false;
+        }
+
+        return $this->launchValues[$this->resourceLinkKey]['id'];
+    }
+
+    public function getSectionId()
+    {
+        if (!$this->launchValues) {
+            return false;
+        }
+
+        return $this->launchValues[$this->customKey]['canvas_coursesection_id'];
+    }
+
+    public function getUserId()
+    {
+        if (!$this->launchValues) {
+            return false;
+        }
+
+        return $this->launchValues[$this->customKey]['canvas_user_id'];
     }
 
     /**
@@ -137,79 +212,11 @@ class LtiContext {
 
     public function getUserLoginId()
     {
-        if (!$this->isInLtiContext()) {
+        if (!$this->launchValues) {
             return false;
         }
 
-        $student = Session::get($this->studentContextKey);
-        if (!$student) {
-            return false;
-        }
-
-        return $student['lti_custom_canvas_user_login_id'];
-    }
-
-    /**
-    * Initialize the context for the assessment in the session; include all pertinent data
-    * for recording an attempt, grade passback, etc. The information is indexed by assessment
-    * ID. This makes it easy for the app to redirect after an LTI launch without passing a
-    * tracking ID obtained from the database with all salient information, as previous iterations
-    * of this app did. Keeping the information in the session allows for more flexibility when
-    * a student is making multiple attempts; the tracking ID strategy sometimes resulted in bugs
-    * when new tracking IDs needed to be generated, when LTI tool was opened in new tab, etc.
-    *
-    * @return void
-    */
-
-    public function initAssessmentContext(Request $request, $assessmentId)
-    {
-        if (!$request->session()->has($this->assessmentsContextKey)) {
-            $request->session()->put($this->assessmentsContextKey, []);
-        }
-
-        $this->verifyUserId($request);
-        $assessmentId = (string)$assessmentId;
-        $currentAssessments = $request->session()->get($this->assessmentsContextKey);
-        if (array_key_exists($assessmentId, $currentAssessments)) {
-            //if assessment info already in session from previous attempt,
-            //update the oauth nonce, which changes with every launch, then
-            //verify that due at time is still the same (update if not) and return
-            $this->updateNonce($request, $currentAssessments, $assessmentId);
-            $this->verifyDueAt($request, $currentAssessments, $assessmentId);
-            return;
-        }
-
-        $thisAssessment = [];
-        $thisAssessment['lis_outcome_service_url'] = $request->lis_outcome_service_url;
-        $thisAssessment['lti_custom_section_id'] = $request->custom_canvas_section_id;
-        $thisAssessment['lti_custom_assignment_id'] = $request->custom_canvas_assignment_id;
-        $thisAssessment['assignment_title']= $request->custom_canvas_assignment_title;
-
-        //potentially no due_at if not a graded assignment
-        if ($request->custom_canvas_assignment_dueat) {
-            $thisAssessment['due_at'] = $request->custom_canvas_assignment_dueat;
-        }
-        //sourcedid will not exist if not a student or if not in a graded assignment
-        if ($request->lis_result_sourcedid) {
-            $thisAssessment['lis_result_sourcedid'] = $request->lis_result_sourcedid;
-        }
-
-        if (!$this->verifyCourseContext($request)) {
-            $this->initCourseContext($request);
-        }
-        $thisAssessment['course_context_id'] = $this->getCourseContextIdFromSession($request);
-
-        //data needed for Caliper events:
-        $courseSisId = null;
-        if ($request->has('lis_course_offering_sourcedid')) {
-            $courseSisId = $request->lis_course_offering_sourcedid;
-        }
-        $thisAssessment['lis_course_offering_sourcedid'] = $courseSisId;
-        $thisAssessment['oauth_nonce'] = $request->oauth_nonce;
-        $thisAssessment['resource_link_id'] = $request->resource_link_id;
-
-        $currentAssessments[$assessmentId] = $thisAssessment;
-        $request->session()->put($this->assessmentsContextKey, $currentAssessments);
+        return $this->launchValues[$this->customKey]['canvas_user_login_id'];
     }
 
     /**
@@ -220,15 +227,11 @@ class LtiContext {
 
     public function initContext(Request $request)
     {
-
         $lti = new LTIAdvantage();
-        //original:
-        // $secret = env('LTI_SECRET');
-        // $context = new BLTI();
-        // $this->validateLaunch($request); //ensure all LTI params are present before trying to initialize
-        // $context->init($secret, $request, $this->requiredParams);
-        // $this->initUserContext($request);
-        // $this->initCourseContext($request);
+        $this->launchValues = $lti->getLaunchValues();
+        $this->validateLaunch();
+        $this->initUserContext();
+        $this->initCourseContext();
     }
 
     /**
@@ -266,14 +269,40 @@ class LtiContext {
     /**
     * Ensure all required launch params are present; abort if not present
     *
-    * @param  Request  $request
     * @return void
     */
 
-    public function validateLaunch(Request $request)
+    public function validateLaunch()
     {
-        $blti = new BLTI();
-        if (!$blti->isLtiDataPresent($request, $this->requiredParams)) {
+        $missingValue = false;
+        $logMessage = 'LTI launch data missing for the following value: ';
+
+        if (!$this->getContextId()) {
+            Log::info($logMessage + 'context ID');
+            $missingValue = true;
+        }
+
+        if (!$this->getCourseId()) {
+            Log::info($logMessage + 'course ID');
+            $missingValue = true;
+        }
+
+        if (!$this->getUserId()) {
+            Log::info($logMessage + 'user ID');
+            $missingValue = true;
+        }
+
+        if (!$this->getUserLoginId()) {
+            Log::info($logMessage + 'user login ID');
+            $missingValue = true;
+        }
+
+        if (!$this->getGivenName()) {
+            Log::info($logMessage + 'given name');
+            $missingValue = true;
+        }
+
+        if ($missingValue) {
             throw new LtiLaunchDataMissingException;
         }
     }
@@ -384,28 +413,28 @@ class LtiContext {
     }
 
     /**
-    * Find existing course context or create a new one if one does not yet exist;
-    * keep a list of courses in the session for fast retrieval when saving new attempts
+    * Find existing course context or create a new one if one does not yet exist
     *
     * @return void
     */
 
-    private function initCourseContext($request)
+    private function initCourseContext()
     {
-        if (!$request->session()->has($this->courseContextKey)) {
-            $request->session()->put($this->courseContextKey, []);
-        }
-
-        $ltiContextId = $request->context_id;
+        $ltiContextId = $this->getContextId();
         $courseContext = CourseContext::where('lti_context_id', '=', $ltiContextId)->first();
         if (!$courseContext) {
             $courseContext = new CourseContext();
-            $courseContext->initialize($request);
+            $courseId = $this->getCourseId();
+            $sourcedId = $this->getCourseOfferingSourcedid();
+            $courseContext->initialize($ltiContextId, $courseId, $sourcedId);
         }
 
-        $currentCourseContexts = $request->session()->get($this->courseContextKey);
-        array_push($currentCourseContexts, $courseContext->toArray());
-        $request->session()->put($this->courseContextKey, $currentCourseContexts);
+        //M. Mallon, 5/26/20: course sourced ID was not being previously saved, may need to update existing courses in DB;
+        //we can remove this in the future after a semester or two
+        if (!$courseContext->getCourseOfferingSourcedid()) {
+            $sourcedId = $this->getCourseOfferingSourcedid();
+            $courseContext->setCourseOfferingSourcedid($sourcedId);
+        }
     }
 
 
@@ -416,19 +445,26 @@ class LtiContext {
     * @return void
     */
 
-    private function initUserContext($request)
+    private function initUserContext()
     {
-        $canvasUserId = $request->custom_canvas_user_id;
+        $canvasUserId = $this->getUserId();
         $student = Student::where('lti_custom_user_id', '=', $canvasUserId)->first();
         if (!$student) {
             $student = new Student();
-            $student->initialize($request);
+            $givenName = $this->getGivenName();
+            $familyName = $this->getFamilyName();
+            $canvasUserId = $this->getUserId();
+            $canvasLoginId = $this->getUserLoginId();
+            $personSourcedId = $this->getPersonSourcedid();
+            $student->initialize($givenName, $familyName, $canvasUserId, $canvasLoginId, $personSourcedId);
         }
 
-        $userData = $student->toArray();
-        //needed this piece of data for Caliper events
-        $userData['lis_person_sourcedid'] = $request->lis_person_sourcedid;
-        $request->session()->put($this->studentContextKey, $userData);
+        //M. Mallon, 5/26/20: person sourced ID was not previously saved, so add to existing users if needed.
+        //in the future, we can remove this when we're pretty confident we only have new/updated user cohorts.
+        if (!$student->getLisPersonSourcedId()) {
+            $sourcedId = $this->getPersonSourcedid();
+            $student->setLisPersonSourcedId($sourcedId);
+        }
     }
 
     /**
@@ -504,21 +540,5 @@ class LtiContext {
         }
 
         $request->session()->put($this->assessmentsContextKey, $currentAssessments);
-    }
-
-    /**
-    * Verify that the user in the session has not changed; this will only occur if an
-    * instructor is accessing via Canvas student view or vice versa
-    *
-    * @param  Request  $request
-    * @return void
-    */
-
-    private function verifyUserId(Request $request) {
-        if ($this->getUserLoginId() !== $request->custom_canvas_user_login_id) {
-            $this->initUserContext($request); //reset user context in session
-            //reset assessments context in session
-            $request->session()->put($this->assessmentsContextKey, []);
-        }
     }
 }

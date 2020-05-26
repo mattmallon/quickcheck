@@ -47,7 +47,11 @@ class LTIAdvantage {
         //library checks the signature, makes sure it isn't expired, etc.
         $decodedJwt = JWT::decode($rawJwt, $this->publicKey['key'], [$this->jwtHeader['alg']]);
         $this->launchValues = (array) $decodedJwt; //returns object; coerce into array
-        dd($this->launchValues);
+        //dd($this->launchValues);
+    }
+
+    public function getLaunchValues() {
+        return $this->launchValues;
     }
 
     public function initOauthToken() {

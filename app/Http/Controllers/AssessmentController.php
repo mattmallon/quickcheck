@@ -86,14 +86,9 @@ class AssessmentController extends \BaseController
         }
 
         $ltiContext = new LtiContext();
-        //only init if LTI context has not yet been established; otherwise, we run into an error where the
-        //new timestamp does not match the OAuth timestamp on the server; it has to be within about 5 minutes
-        //of the launch, so we were getting 500 errors when the app sat idle for > 5 minutes
-        if (!$ltiContext->isInLtiContext()) {
-            $ltiContext->initContext($request);
-        }
-        $ltiContext->validateLaunch($request); //check required params every launch
-        $ltiContext->initAssessmentContext($request, $assessmentId);
+        $ltiContext->initContext($request);
+
+        //generate new attempt
 
         $assessment = Assessment::findOrFail($assessmentId);
         if ($assessment->custom_activity_id) {

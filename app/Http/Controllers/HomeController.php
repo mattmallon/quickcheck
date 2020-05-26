@@ -28,7 +28,10 @@ class HomeController extends BaseController
         $ltiContext = new LtiContext;
         $isInstructor = $ltiContext->isInstructor();
         $isLti = $ltiContext->isInLtiContext();
-        $contextId = $ltiContext->getContextIdFromSession();
+
+        //$contextId = $ltiContext->getContextIdFromSession();
+        $contextId = null;
+
         //if a student, redirect to their view with context ID as query param
         if (User::isStudentViewingResults()) {
             return redirect('student?context=' . $contextId);
