@@ -96,6 +96,9 @@ export class AssessmentComponent implements OnInit {
     this.parseCaliperData(data);
     this.parseTimeoutData(data);
     //if API token present, this is our first attempt of the session and authentication was valid
+    if (data.apiToken) {
+      this.setApiToken(data.apiToken);
+    }
 
     this.utilitiesService.loadingFinished();
     await this.initQuestions();
@@ -305,6 +308,12 @@ export class AssessmentComponent implements OnInit {
   restart() {
     //hard page refresh to ensure a new attempt is created
     window.location.reload();
+  }
+
+  setApiToken(apiToken) {
+    this.apiToken = apiToken;
+    sessionStorage.setItem(this.sessionStorageTokenKey, this.apiToken);
+    this.assessmentService.setApiToken(this.apiToken);
   }
 
   showErrorModal(errorMessage, showRestartBtn = true) {

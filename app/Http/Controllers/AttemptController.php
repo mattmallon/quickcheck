@@ -253,6 +253,7 @@ class AttemptController extends \BaseController
         $attemptId = $request->input('attemptId');
         $attempt = Attempt::findOrFail($attemptId);
         $apiToken = $request->bearerToken();
+        $groupName = null;
 
         //if a preview/anonymous, no need to authenticate
         $preview = $request->input('preview');
@@ -269,8 +270,12 @@ class AttemptController extends \BaseController
             return response()->success(['attemptId' => $attempt->id]);
         }
 
+        $student = $attempt->student;
         //if a valid API token present in the request
         if ($apiToken) {
+            if ($student->getApiToken() !== $apiToken) {
+                abort(403, 'Unable to authenticate, token mismatch.');
+            }
             //if attempt already started, authenticated student is restarting the QC, copy to new attempt
             if ($attempt->isLaunched()) {
                 $attempt = $attempt->replicate();
@@ -292,12 +297,25 @@ class AttemptController extends \BaseController
                 abort(403, 'Unable to authenticate, LTI launch data invalid.');
             }
 
-            $student = $attempt->student;
             $apiToken = $student->getApiToken();
             $attempt->launchAttempt();
         }
 
-        $data = ['attemptId' => $attempt->id];
+        //get group information, if necessary; only provided if custom activity has group in request
+        if ($request->has('group')) {
+            $groupName = $attempt->getGroupName($attemptType);
+        }
+
+        $caliperData = $attempt->getCaliperData();
+        $timeoutRemaining = $attempt->getTimeoutRemaining($assessment_id, $student->id);
+
+        $data = [
+            'apiToken' => $apiToken,
+            'attemptId' => $attempt->id,
+            'caliper' => $caliperData,
+            'groupName' => $groupName,
+            'timeoutRemaining' => $timeoutRemaining
+        ];
         if ($apiToken) {
             $data['apiToken'] = $apiToken;
         }

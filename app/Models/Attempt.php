@@ -12,6 +12,7 @@ use App\Models\CourseContext;
 use App\Models\Student;
 use App\Classes\LTI\LtiContext;
 use App\Exceptions\MissingLtiContextException;
+use Illuminate\Support\Facades\Cache;
 
 class Attempt extends Eloquent {
     protected $table = 'attempts';
@@ -42,7 +43,7 @@ class Attempt extends Eloquent {
     public $TIMEOUT_MAX_COUNT = 2;
     public $TIMEOUT_MILESTONE = 'timeout';
     public $TIMEOUT_LENGTH = '2 minutes';
-    public $TIMEOUT_SESSION_KEY = 'timeoutEnd';
+    public $TIMEOUT_CACHE_KEY = 'timeoutEnd-';
 
     public function assessment() {
         return $this->belongsTo('App\Models\Assessment');
@@ -346,6 +347,23 @@ class Attempt extends Eloquent {
     }
 
     /**
+    * Get data needed to forward to Caliper sensor on LTI launch
+    *
+    * @return []
+    */
+
+    public function getCaliperData() {
+        $caliperData = null;
+        $caliper = new Caliper();
+        $caliperEnabled = $caliper->isEnabled();
+        if ($caliperEnabled) {
+            $caliperData = $caliper->buildAssessmentStartedEventData($this);
+        }
+
+        return $caliperData;
+    }
+
+    /**
     * Get the duration of an attempt
     *
     * @return float (time in seconds)
@@ -386,50 +404,19 @@ class Attempt extends Eloquent {
     * @param  str        $assessment_id
     * @param  Request    $request
     * @param  LtiContext $ltiContext
-    * @return []         (includes attempt ID, attempt type, and optional group name)
+    * @return void
     */
 
     public function initAttempt($assessmentId, Request $request, LtiContext $ltiContext = null) {
         $attemptType = $this->getAttemptType($request, $ltiContext);
-        $groupName = null;
-        $caliperData = null;
-        $timeoutRemaining = null;
 
-        if ($attemptType === 'LTI') {
+        //only init with LTI data if present; otherwise, if user is restarting, data already copied from last valid attempt
+        if ($attemptType === 'LTI' && $ltiContext) {
             $this->initLtiAttempt($assessmentId, $ltiContext);
         }
-        else {
+        if ($attemptType === 'Anonymous') {
             $this->initAnonymousAttempt($assessmentId);
         }
-
-        //get group information, if necessary; only provided if custom activity has group in request
-        if ($request->has('group')) {
-            $groupName = $this->getGroupName($attemptType);
-        }
-
-        $caliper = new Caliper();
-        $caliperEnabled = $caliper->isEnabled();
-        if ($caliperEnabled) {
-            $caliperData = $caliper->buildAssessmentStartedEventData($this);
-        }
-
-        //if attempt timeout feature enabled, determine if timeout is in effect
-        $collectionFeature = new CollectionFeature();
-        if ($collectionFeature->isAttemptTimeoutEnabled($assessmentId)) {
-            $timeoutRemaining = $this->getTimeoutRemaining($request);
-            if ($timeoutRemaining > 0) {
-                $this->last_milestone = $this->TIMEOUT_MILESTONE;
-                $this->save();
-            }
-        }
-
-        return [
-            'attemptId' => $this->id,
-            'attemptType' => $attemptType,
-            'caliper' => $caliperData,
-            'groupName' => $groupName,
-            'timeoutRemaining' => $timeoutRemaining
-        ];
     }
 
     /**
@@ -658,7 +645,8 @@ class Attempt extends Eloquent {
         $recentAttempts = Attempt::where('student_id', '=', $this->student_id)
             ->where('last_milestone', '!=', $this->TIMEOUT_MILESTONE) //only count valid attempts
             ->where('created_at', '>', $boundary_timestamp) //in a recent time period
-            ->whereNotNull('lis_result_sourcedid') //only include graded attempts
+            //TODO: update sourcedid for LTI advantage to determine what is graded or not
+            //->whereNotNull('lis_result_sourcedid') //only include graded attempts
             ->has('studentResponses') //where questions were answered (so not just a view)
             ->limit(20) //limit to ease load on DB, just in case someone is refreshing a lot
             ->get()
@@ -686,11 +674,10 @@ class Attempt extends Eloquent {
     /**
     * If a custom activity where group name is included, get the name of the student's group
     *
-    * @param  string  $attemptType
     * @return string
     */
 
-    private function getGroupName($attemptType) {
+    private function getGroupName() {
         $courseContext = CourseContext::find($this->course_context_id);
         $courseId = $courseContext->lti_custom_course_id;
         $student = Student::find($this->student_id);
@@ -712,16 +699,14 @@ class Attempt extends Eloquent {
     }
 
     /**
-    * Get time in seconds remaining in timeout based on session data;
-    * session value allows for timeout periods that last longer than the
-    * boundary period (i.e., 1 minute window for attempts but 2 minute timeout)
+    * Get time in seconds remaining in timeout
     *
-    * @param  Request  $request
-    * @return mixed (int if value in session and in future, otherwise false)
+    * @param  int   $studentId
+    * @return mixed (int if value in cache and in future, otherwise false)
     */
 
-    private function getTimeoutInSession(Request $request) {
-        $timeoutEnd = $request->session()->get($this->TIMEOUT_SESSION_KEY);
+    private function getTimeoutRemainingInCache($studentId) {
+        $timeoutEnd = Cache::get($this->TIMEOUT_CACHE_KEY . $studentId);
         if (!$timeoutEnd) {
             return false;
         }
@@ -738,18 +723,20 @@ class Attempt extends Eloquent {
     /**
     * Get time in seconds of timeout time remaining if feature enabled in collection
     *
-    * @param  Request  $request
+    * @param  int  $assessmentId
+    * @param  int  $studentId
     * @return int
     */
 
-    private function getTimeoutRemaining(Request $request) {
-        if (!$this->isTimeoutApplicable()) {
+    public function getTimeoutRemaining($assessmentId, $studentId) {
+        if (!$this->isTimeoutApplicable($assessmentId)) {
             return 0;
         }
 
-        $timeoutRemainingInSession = $this->getTimeoutInSession($request);
-        if ($timeoutRemainingInSession) {
-            return $timeoutRemainingInSession;
+        $timeoutRemainingInCache = $this->getTimeoutRemainingInCache($studentId);
+        if ($timeoutRemainingInCache) {
+            $this->setTimeoutOnAttempt();
+            return $timeoutRemainingInCache;
         }
 
         $recentAttempts = $this->getAttemptsInTimeoutWindow();
@@ -763,7 +750,8 @@ class Attempt extends Eloquent {
         $endTimeout = new DateTime($lastValidAttempt->updated_at);
         $endTimeout->modify('+' . $timeoutLength);
         $endTimeoutTimestamp = $endTimeout->getTimestamp();
-        $this->setTimeoutInSession($request, $endTimeoutTimestamp);
+        $this->setTimeoutInCache($studentId, $endTimeoutTimestamp);
+        $this->setTimeoutOnAttempt();
 
         $now = new DateTime();
         $timeRemaining = $endTimeoutTimestamp - $now->getTimestamp(); //difference in seconds
@@ -805,19 +793,27 @@ class Attempt extends Eloquent {
     /**
     * Determine if timeout feature applies to an attempt (before due date, not anonymous, etc.)
     *
+    * @param  int  $assessmentId
     * @return boolean
     */
 
-    private function isTimeoutApplicable() {
+    private function isTimeoutApplicable($assessmentId) {
+        //must be enabled at the collection-level
+        $collectionFeature = new CollectionFeature();
+        if (!$collectionFeature->isAttemptTimeoutEnabled($assessmentId)) {
+            return false;
+        }
+
         //only needed for LTI attempts
         if ($this->isAnonymous()) {
             return false;
         }
 
+        //TODO: need to update this for LTI advantage
         //if ungraded, no timeout necessary
-        if (!$this->lis_result_sourcedid) {
-            return false;
-        }
+        //if (!$this->lis_result_sourcedid) {
+        //    return false;
+        //}
 
         //if studying after the due date, no timeout necessary
         if ($this->isPastDue()) {
@@ -844,14 +840,28 @@ class Attempt extends Eloquent {
     }
 
     /**
-    * If timeout feature turned on, set the end of the timeout in the session with a timestamp
+    * Set timeout in cache for this user; can't simply use a DB query because the timeout length may be longer
+    * than the window in which attempts can be made, i.e., if student is on a 2 minute timeout, but we are checking
+    * for attempts made within a 1 minute window, then query for the 1 minute window would give us the thumbs up.
+    * Have the item persist in the cache only for the duration of the timeout.
     *
-    * @param  Request $request
-    * @param  int     $endTimeoutTimestamp
+    * @param  int   $studentId
+    * @param  int   $endTimeoutTimestamp
     * @return void
     */
 
-    private function setTimeoutInSession(Request $request, $endTimeoutTimestamp) {
-        $request->session()->put($this->TIMEOUT_SESSION_KEY, $endTimeoutTimestamp);
+    private function setTimeoutInCache($studentId, $endTimeoutTimestamp) {
+        Cache::put($this->TIMEOUT_CACHE_KEY . $studentId, $endTimeoutTimestamp, $endTimeoutTimestamp);
+    }
+
+    /**
+    * Set an attempt as being subject to a timeout in the database
+    *
+    * @return void
+    */
+
+    private function setTimeoutOnAttempt() {
+        $this->last_milestone = $this->TIMEOUT_MILESTONE;
+        $this->save();
     }
 }
