@@ -120,14 +120,10 @@ class Caliper
         $data['custom_canvas_user_id'] = $student->getCanvasUserId();
         $data['custom_canvas_user_login_id'] = $student->getCanvasUserLoginId();
         $data['ltiConsumerUrl'] = $attempt->getLtiConsumerUrl();
-
-        //the following is data that is extraneous to the app, and is only
-        //included in the LTI session context
-        $ltiContext = new LtiContext();
-        $data['ltiNonce'] = $ltiContext->getNonce($assessmentId);
-        $data['lis_course_offering_sourcedid'] = $ltiContext->getCourseOfferingSourcedid($assessmentId);
-        $data['lis_person_sourcedid'] = $ltiContext->getPersonSourcedid();
-        $data['resource_link_id'] = $ltiContext->getResourceLinkId($assessmentId);
+        $data['ltiNonce'] = $attempt->getNonce();
+        $data['lis_course_offering_sourcedid'] = $courseContext->getCourseOfferingSourcedid();
+        $data['lis_person_sourcedid'] = $student->getLisPersonSourcedId();
+        $data['resource_link_id'] = $attempt->getResourceLinkId();
 
         return $data;
     }

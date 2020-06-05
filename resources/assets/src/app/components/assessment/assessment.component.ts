@@ -18,10 +18,11 @@ import { Subscription } from 'rxjs';
 export class AssessmentComponent implements OnInit {
   bsModalRef: BsModalRef;
   answerSelected = false;
+  apiToken = null;
   assessmentId = '';
   assessmentTitle = null;
   assessmentDescription = null;
-  attemptId = false;
+  attemptId = null;
   caliper = null;
   complete = false;
   countCorrect = 0;
@@ -34,10 +35,12 @@ export class AssessmentComponent implements OnInit {
   isCorrect = false;
   isNextBtnDisabled = false; //have to be careful to prevent double clicking next btn
   modalVisible = false; //for accessibility purposes, hide main when modal is visible
+  nonce = null; //nonce passed to front-end on LTI launch for verification
   questions = null;
   partialCredit = false;
   pointsPossible = 0;
   preview = false; //if preview query param in URL, send to server, valid LTI session not needed
+  sessionStorageTokenKey = 'iu-eds-qc-student-token';
   score = 0;
   studentAnswer = null;
   timeoutSecondsRemaining = null; //seconds of timeout remaining, if feature enabled
@@ -52,11 +55,17 @@ export class AssessmentComponent implements OnInit {
   {
     //subscribe to changes in feedback modal
     this.modalService.onHide.subscribe(() => { this.nextQuestion() });
+
+    this.apiToken = this.getApiTokenFromSessionStorage();
+    this.assessmentService.setApiToken(this.apiToken);
   }
 
   async ngOnInit() {
     this.getAssessmentIdFromUrl();
     this.preview = this.isPreview();
+    this.attemptId = this.utilitiesService.getQueryParam('attemptId');
+    this.nonce = this.utilitiesService.getQueryParam('nonce');
+
     let data;
 
     this.utilitiesService.loadingStarted();
@@ -71,7 +80,7 @@ export class AssessmentComponent implements OnInit {
     }
 
     try {
-      const resp = await this.assessmentService.initAttempt(this.assessmentId, this.preview.toString());
+      const resp = await this.assessmentService.initAttempt(this.assessmentId, this.preview.toString(), this.attemptId, this.nonce);
       data = this.utilitiesService.getResponseData(resp);
     }
     catch(error) {
@@ -82,9 +91,12 @@ export class AssessmentComponent implements OnInit {
       return;
     }
 
+    //if student is restarting the QC, we might be receiving a new attempt ID
     this.attemptId = data.attemptId;
     this.parseCaliperData(data);
     this.parseTimeoutData(data);
+    //if API token present, this is our first attempt of the session and authentication was valid
+
     this.utilitiesService.loadingFinished();
     await this.initQuestions();
   }
@@ -102,6 +114,10 @@ export class AssessmentComponent implements OnInit {
     catch (error) {
       return false;
     }
+  }
+
+  getApiTokenFromSessionStorage() {
+    return sessionStorage.getItem(this.sessionStorageTokenKey);
   }
 
   //get the assessment id from the Laravel url, /assessment/{id} and separate from query strings at the end, if necessary;

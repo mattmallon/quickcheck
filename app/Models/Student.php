@@ -2,6 +2,7 @@
 namespace App\Models;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Validator;
 
 class Student extends Eloquent {
@@ -11,7 +12,8 @@ class Student extends Eloquent {
         "lis_person_name_family",
         "lti_custom_canvas_user_login_id",
         "lti_custom_user_id",
-        "lti_person_sourcedid"
+        "lti_person_sourcedid",
+        "api_token"
     ];
 
     public function attempts() {
@@ -37,6 +39,34 @@ class Student extends Eloquent {
             unset($export[$key]);
         }
         return $export;
+    }
+
+    /**
+    * Retrieve student from database by Canvas user ID
+    *
+    * @param  int $canvasUserId
+    * @return Student
+    */
+
+    public static function findByCanvasUserId($canvasUserId)
+    {
+        $student = Student::where('lti_custom_user_id', '=', $canvasUserId)->first();
+        if (!$student) {
+            abort(500, 'Existing student not found.');
+        }
+
+        return $student;
+    }
+
+    /**
+    * Return the Quick Check-specific API token of the student
+    *
+    * @return str
+    */
+
+    public function getApiToken()
+    {
+        return $this->api_token;
     }
 
     /**
@@ -90,6 +120,19 @@ class Student extends Eloquent {
         $this->lti_custom_canvas_user_login_id = $canvasLoginId;
         $this->lti_custom_user_id = $canvasUserId;
         $this->lis_person_sourcedid = $personSourcedId;
+        $this->api_token = Str::random(60);
+        $this->save();
+    }
+
+    /**
+    * Update an existing user to add an API token, which was not formerly saved on this model
+    *
+    * @return void
+    */
+
+    public function setApiToken()
+    {
+        $this->api_token = Str::random(60);
         $this->save();
     }
 

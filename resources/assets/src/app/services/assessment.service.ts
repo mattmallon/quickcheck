@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { timeout } from 'rxjs/operators';
 import { HttpService } from './http.service';
 
@@ -7,6 +7,8 @@ import { HttpService } from './http.service';
   providedIn: 'root'
 })
 export class AssessmentService {
+
+  apiToken = null;
 
   constructor(private httpClient: HttpClient, private httpService: HttpService) { }
 
@@ -28,13 +30,25 @@ export class AssessmentService {
       .toPromise();
   }
 
-  async initAttempt(id, preview) {
+  async initAttempt(assessmentId, preview, attemptId = null, nonce = null) {
     const timeoutLength = this.httpService.getDefaultTimeout();
-    const path = this.httpService.getApiRoute() + '/attempt/' + id;
+    const path = this.httpService.getApiRoute() + '/attempt/' + assessmentId;
+    const params = { preview, attemptId, nonce };
+    const httpOptions = {
+      headers: new HttpHeaders({})
+    };
 
-    return await this.httpClient.post(path, { preview })
+    if (this.apiToken) {
+      httpOptions.headers = httpOptions.headers.set('Authorization', `Bearer ${this.apiToken}`);
+    }
+
+    return await this.httpClient.post(path, params, httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
+  }
+
+  setApiToken(apiToken) {
+    this.apiToken = apiToken;
   }
 
   async submitQuestion(id, submission) {

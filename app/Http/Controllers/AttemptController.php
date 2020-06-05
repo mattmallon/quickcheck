@@ -13,6 +13,7 @@ use App\Models\Question;
 use App\Models\Release;
 use App\Models\Student;
 use App\Models\CollectionFeature;
+use Illuminate\Support\Facades\Cache;
 
 class AttemptController extends \BaseController
 {
@@ -241,17 +242,67 @@ class AttemptController extends \BaseController
     }
 
     /**
-    * Create an attempt record
+    * Mark an attempt as launched, authenticating with an API token
     *
     * @param  int  $assessment_id
-    * @return attempt ID and attempt type in a JSON Response
+    * @return attempt ID, attempt type, and optional API token in a JSON Response
     */
 
-    public function initAttempt($assessment_id, Request $request)
+    public function launchAttempt($assessment_id, Request $request)
     {
-        $attempt = new Attempt;
-        $attemptData = $attempt->initAttempt($assessment_id, $request);
-        return response()->success($attemptData);
+        $attemptId = $request->input('attemptId');
+        $attempt = Attempt::findOrFail($attemptId);
+        $apiToken = $request->bearerToken();
+
+        //if a preview/anonymous, no need to authenticate
+        $preview = $request->input('preview');
+        if ($preview === "true") {
+            //if user refreshes, create a new attempt; when a preview, no additional launch data needed,
+            //no sensitive data here and so nothing to check/authenticate
+            if ($attempt->isLaunched()) {
+                $attempt = new Attempt;
+                $attempt->initAnonymousAttempt($assessment_id);
+            }
+
+            $anonymous = true;
+            $attempt->launchAttempt($anonymous);
+            return response()->success(['attemptId' => $attempt->id]);
+        }
+
+        //if a valid API token present in the request
+        if ($apiToken) {
+            //if attempt already started, authenticated student is restarting the QC, copy to new attempt
+            if ($attempt->isLaunched()) {
+                $attempt = $attempt->replicate();
+                $attempt->reset();
+            }
+
+            $attempt->launchAttempt();
+        }
+        //if no API token present, look for nonce and attempt ID in cache to authenticate, return API token
+        else {
+            $nonce = $request->input('nonce');
+            $cachedValue = Cache::pull($nonce); //pull method will retrieve and immediately delete in cache
+
+            if (!$cachedValue) {
+                abort(403, 'Unable to authenticate, LTI launch data unavailable.');
+            }
+
+            if ($cachedValue != $attemptId) {
+                abort(403, 'Unable to authenticate, LTI launch data invalid.');
+            }
+
+            $student = $attempt->student;
+            $apiToken = $student->getApiToken();
+            $attempt->launchAttempt();
+        }
+
+        $data = ['attemptId' => $attempt->id];
+        if ($apiToken) {
+            $data['apiToken'] = $apiToken;
+        }
+
+        return response()->success($data);
     }
 
     /**

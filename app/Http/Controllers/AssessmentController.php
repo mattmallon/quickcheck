@@ -2,14 +2,15 @@
 
 use Illuminate\Http\Request;
 use App\Classes\LTI\LtiContext;
-use App\Classes\LTI\AnonymousContext;
 use App\Classes\ExternalData\CanvasAPI;
 use App\Models\Assessment;
 use App\Models\AssessmentGroup;
+use App\Models\Attempt;
 use App\Models\Collection;
 use App\Models\User;
 use App\Models\CustomActivity;
 use App\Models\Question;
+use Illuminate\Support\Facades\Cache;
 
 class AssessmentController extends \BaseController
 {
@@ -55,15 +56,24 @@ class AssessmentController extends \BaseController
             return response()->error(400, ['Assessment ID is missing from url query string.']);
         }
 
-        $anonymousContext = new AnonymousContext();
-        $anonymousContext->create($request);
-
         $assessment = Assessment::findOrFail($assessmentId);
-        if ($assessment->custom_activity_id) {
-            return $this->redirectToCustomActivity($assessment, $request);
+        if ($request->has('attemptId')) {
+            if ($assessment->custom_activity_id) {
+                return $this->redirectToCustomActivity($assessment, $request);
+            }
+
+            return displaySPA();
         }
 
-        return displaySPA();
+        //generate new attempt
+        $attempt = new Attempt;
+        $attempt->initAttempt($assessmentId, $request);
+
+        //redirect to include attempt ID in query string
+        $redirectPath = $request->fullUrl();
+        $redirectPath .= ('&attemptId=' . $attempt->id);
+
+        return redirect($redirectPath);
     }
 
     /**
@@ -85,17 +95,34 @@ class AssessmentController extends \BaseController
             return response()->error(400, ['Assessment ID is missing from url query string.']);
         }
 
+        //add attempt ID and nonce to query string after generating new attempt, then allow on once we have it
+        $assessment = Assessment::findOrFail($assessmentId);
+        if ($request->has('attemptId') && $request->has('nonce')) {
+            if ($assessment->custom_activity_id) {
+                return $this->redirectToCustomActivity($assessment, $request, );
+            }
+
+            return displaySPA();
+        }
+
         $ltiContext = new LtiContext();
         $ltiContext->initContext($request);
 
         //generate new attempt
+        $attempt = new Attempt;
+        $attempt->initAttempt($assessmentId, $request, $ltiContext);
 
-        $assessment = Assessment::findOrFail($assessmentId);
-        if ($assessment->custom_activity_id) {
-            return $this->redirectToCustomActivity($assessment, $request);
-        }
+        //cache nonce and attempt ID to verify authenticity of new attempt if user does not have an API token this session
+        $nonce = $attempt->getNonce();
+        $attemptId = $attempt->id;
+        Cache::put($nonce, $attemptId, now()->addMinutes(5));
 
-        return displaySPA();
+        //redirect to include attempt ID and nonce in query string for API token authentication
+        $redirectPath = $request->fullUrl();
+        $redirectPath .= ('&attemptId=' . $attemptId);
+        $redirectPath .= ('&nonce=' . $nonce);
+
+        return redirect($redirectPath);
     }
 
     /************************************************************************/
@@ -314,6 +341,14 @@ class AssessmentController extends \BaseController
         $customActivity = CustomActivity::findOrFail($assessment->custom_activity_id);
         //in the redirect url, include the assessment id as a query param, so an attempt can be initialized
         $redirectUrl = $customActivity->getRedirectUrl($request, $assessment->id);
+        $attemptId = $request->get('attemptId');
+        $nonce = $request->get('nonce');
+
+        $redirectUrl .= ('&attemptId=' . $attemptId);
+        if ($nonce) {
+            $redirectUrl .= ('$nonce=' . $nonce);
+        }
+
         return redirect($redirectUrl);
     }
 }

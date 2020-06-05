@@ -53,7 +53,7 @@ Route::get('establishcookietrust', function() {
 
 Route::group(['prefix' => 'api'], function() {
     //Initializing an attempt
-    Route::post('attempt/{assessmentId}', 'AttemptController@initAttempt');
+    Route::post('attempt/{assessmentId}', 'AttemptController@launchAttempt');
 
     //Quiz-taking
     Route::get('assessment/{id}/questions', 'AssessmentController@getAssessmentQuestions');

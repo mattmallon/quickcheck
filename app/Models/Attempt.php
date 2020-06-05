@@ -11,7 +11,7 @@ use App\Models\CollectionFeature;
 use App\Models\CourseContext;
 use App\Models\Student;
 use App\Classes\LTI\LtiContext;
-use App\Exceptions\SessionMissingLtiContextException;
+use App\Exceptions\MissingLtiContextException;
 
 class Attempt extends Eloquent {
     protected $table = 'attempts';
@@ -35,6 +35,9 @@ class Attempt extends Eloquent {
     public $optionalParams = ['last_milestone', 'count_correct', 'count_incorrect', 'complete', 'calculated_score'];
 
     //constants
+    public $MILESTONE_CREATED = 'Attempt created';
+    public $MILESTONE_LTI_LAUNCH = 'LTI launch';
+    public $MILESTONE_ANONYMOUS_LAUNCH = 'Anonymous launch';
     public $TIMEOUT_BOUNDARY = '1 minute';
     public $TIMEOUT_MAX_COUNT = 2;
     public $TIMEOUT_MILESTONE = 'timeout';
@@ -201,6 +204,28 @@ class Attempt extends Eloquent {
     }
 
     /**
+    * Get an attempt's LTI launch nonce
+    *
+    * @return string $nonce
+    */
+
+    public function getNonce()
+    {
+        return $this->nonce;
+    }
+
+    /**
+    * Get an attempt's LTI launch resource link ID
+    *
+    * @return string $resourceLinkId
+    */
+
+    public function getResourceLinkId()
+    {
+        return $this->resource_link_id;
+    }
+
+    /**
     * Get an attempt's score, based on number of correct responses out of total question count
     *
     * @return int
@@ -356,55 +381,69 @@ class Attempt extends Eloquent {
 
     /**
     * Initialize an attempt for a given assessment_id;
-    * Writes a record in the database for the attempt, and can create either LTI or anonymous attempts;
+    * Writes a record in the database for the attempt, and can create either LTI or anonymous attempts
     *
-    * @param  Request $request
-    * @param  str     $assessment_id
-    * @return []      (includes attempt ID, attempt type, and optional group name)
+    * @param  str        $assessment_id
+    * @param  Request    $request
+    * @param  LtiContext $ltiContext
+    * @return []         (includes attempt ID, attempt type, and optional group name)
     */
 
-    public function initAttempt($assessmentId, Request $request) {
-        $attemptType = $this->getAttemptType($request);
-        $attempt = null;
+    public function initAttempt($assessmentId, Request $request, LtiContext $ltiContext = null) {
+        $attemptType = $this->getAttemptType($request, $ltiContext);
         $groupName = null;
         $caliperData = null;
         $timeoutRemaining = null;
 
         if ($attemptType === 'LTI') {
-            $attempt = $this->initLtiAttempt($assessmentId, $request);
+            $this->initLtiAttempt($assessmentId, $ltiContext);
         }
         else {
-            $attempt = $this->initAnonymousAttempt($assessmentId);
+            $this->initAnonymousAttempt($assessmentId);
         }
 
         //get group information, if necessary; only provided if custom activity has group in request
         if ($request->has('group')) {
-            $groupName = $this->getGroupName($attemptType, $attempt);
+            $groupName = $this->getGroupName($attemptType);
         }
 
         $caliper = new Caliper();
         $caliperEnabled = $caliper->isEnabled();
         if ($caliperEnabled) {
-            $caliperData = $caliper->buildAssessmentStartedEventData($attempt);
+            $caliperData = $caliper->buildAssessmentStartedEventData($this);
         }
 
         //if attempt timeout feature enabled, determine if timeout is in effect
         $collectionFeature = new CollectionFeature();
         if ($collectionFeature->isAttemptTimeoutEnabled($assessmentId)) {
-            $timeoutRemaining = $attempt->getTimeoutRemaining($request);
+            $timeoutRemaining = $this->getTimeoutRemaining($request);
             if ($timeoutRemaining > 0) {
-                $attempt->last_milestone = $this->TIMEOUT_MILESTONE;
-                $attempt->save();
+                $this->last_milestone = $this->TIMEOUT_MILESTONE;
+                $this->save();
             }
         }
 
         return [
-            'attemptId' => $attempt->id,
+            'attemptId' => $this->id,
             'attemptType' => $attemptType,
             'caliper' => $caliperData,
             'groupName' => $groupName,
             'timeoutRemaining' => $timeoutRemaining
         ];
+    }
+
+    /**
+    * Initialize an anonymous attempt
+    *
+    * @param  int  $assessmentId
+    * @return Attempt
+    */
+
+    public function initAnonymousAttempt($assessmentId) {
+        $this->assessment_id = $assessmentId;
+        $this->last_milestone = $this->MILESTONE_CREATED;
+        $this->save();
+        return $this;
     }
 
     /**
@@ -436,6 +475,20 @@ class Attempt extends Eloquent {
         }
 
         return false;
+    }
+
+    /**
+    * Determine if an attempt has been launched
+    *
+    * @return boolean
+    */
+
+    public function isLaunched() {
+        if ($this->last_milestone === $this->MILESTONE_CREATED) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -490,6 +543,43 @@ class Attempt extends Eloquent {
     }
 
     /**
+    * Update attempt with launch status
+    *
+    * @param bool   $anonymous (optional, default false)
+    * @return void
+    */
+
+    public function launchAttempt($anonymous = false) {
+        if ($this->isLaunched()) {
+            abort(403, 'Attempt has already been initialized, please refresh the page.');
+        }
+
+        if ($anonymous) {
+            $this->last_milestone = $this->MILESTONE_ANONYMOUS_LAUNCH;
+        }
+        else {
+            $this->last_milestone = $this->MILESTONE_LTI_LAUNCH;
+        }
+
+        $this->save();
+    }
+
+    /**
+    * Reset attempt data for a new launch (used when restarting)
+    *
+    * @return void
+    */
+
+    public function reset() {
+        $this->last_milestone = $this->MILESTONE_CREATED;
+        $this->count_correct = null;
+        $this->count_incorrect = null;
+        $this->calculated_score = null;
+        $this->complete = 0;
+        $this->save();
+    }
+
+    /**
     * Update attempt
     *
     * @param  []  $attemptData
@@ -527,24 +617,28 @@ class Attempt extends Eloquent {
     * @return string
     */
 
-    private function getAttemptType($request) {
+    private function getAttemptType($request, $ltiContext = null) {
+        //if preview included, it's an anonymous attempt from instructor
         if ($request->has('preview')) {
             //boolean in js comes through as string
             $isPreview = $request->input('preview') === "true" ? true : false;
-            //if preview included, it's an anonymous attempt; although LTI data may be present
-            //for an instructor previewing, it gets messy because assessment-specific information
-            //may not be present if the instructor has not accessed it via an assignment
             if ($isPreview) {
                 return 'Anonymous';
             }
         }
-        if (LtiContext::isInLtiContext() && !$request->has('anonymous')) {
+
+        //new LTI launch
+        if ($ltiContext && !$request->has('anonymous')) {
             return 'LTI';
         }
 
-        //if not explicitly an instructor preview and no LTI context, throw an error;
-        //students who have an expired session should be told to refresh the LTI launch
-        throw new SessionMissingLtiContextException;
+        //student is restarting on the same quick check and data has been copied over
+        if ($this->course_context_id) {
+            return 'LTI';
+        }
+
+        //if not explicitly an instructor preview and no LTI context, throw an error
+        throw new MissingLtiContextException;
     }
 
     /**
@@ -593,23 +687,17 @@ class Attempt extends Eloquent {
     * If a custom activity where group name is included, get the name of the student's group
     *
     * @param  string  $attemptType
-    * @param  Attempt $attempt
     * @return string
     */
 
-    private function getGroupName($attemptType, $attempt) {
-        //instructors and course designers can't be in a group, but students can be; technically the Canvas API class will
-        //just send back false for the group name if an instructor/designer, but it does still need to run quite a few
-        //API queries, so it will save some time to bypass that step altogether if an instructor/designer in LTI context
-        if ($attemptType === 'LTI' && LtiContext::isInstructor()) {
-            return false;
-        }
-        $courseContext = CourseContext::find($attempt->course_context_id);
+    private function getGroupName($attemptType) {
+        $courseContext = CourseContext::find($this->course_context_id);
         $courseId = $courseContext->lti_custom_course_id;
-        $student = Student::find($attempt->student_id);
+        $student = Student::find($this->student_id);
         $studentId = $student->lti_custom_user_id;
         $canvasAPI = new CanvasAPI;
         $groupName = $canvasAPI->getUserGroup($courseId, $studentId);
+
         return $groupName;
     }
 
@@ -684,34 +772,34 @@ class Attempt extends Eloquent {
     }
 
     /**
-    * Initialize an anonymous attempt
-    *
-    * @param  int  $assessmentId
-    * @return Attempt
-    */
-
-    private function initAnonymousAttempt($assessmentId) {
-        $attempt = new Attempt;
-        $attempt->assessment_id = $assessmentId;
-        $attempt->last_milestone = "Anonymous Launch";
-        $attempt->save();
-        return $attempt;
-    }
-
-    /**
     * Initialize an LTI attempt
     *
-    * @param  int     $assessmentId
-    * @param  Request $request
+    * @param  int        $assessmentId
+    * @param  LtiContext $ltiContext
     * @return Attempt
     */
 
-    private function initLtiAttempt($assessmentId, $request) {
-        $attempt = new Attempt;
-        $ltiContext = new LtiContext();
-        $attemptData = $ltiContext->getAttemptDataFromSession($request, $assessmentId);
-        $attempt = $attempt->create($attemptData);
-        return $attempt;
+    private function initLtiAttempt($assessmentId, $ltiContext) {
+        $contextId = $ltiContext->getContextId();
+        $courseContext = CourseContext::findByLtiContextId($contextId);
+        $canvasUserId = $ltiContext->getUserId();
+        $student = Student::findByCanvasUserId($canvasUserId);
+
+        $this->assessment_id = $assessmentId;
+        $this->course_context_id = $courseContext->id;
+        $this->student_id = $student->id;
+        $this->lti_custom_assignment_id = $ltiContext->getAssignmentId();
+        $this->lti_custom_section_id = $ltiContext->getSectionId();
+        //$attempt->lis_outcome_service_url = $ltiContext->; //TODO: needed? something else? keep in DB as NULL for historical data
+        //$attempt->lis_result_sourcedid = ; //TODO: needed? something else? keep in DB as NULL for historical data
+        $this->last_milestone = $this->MILESTONE_CREATED;
+        $this->assignment_title = $ltiContext->getAssignmentTitle();
+        $this->due_at = $ltiContext->getDueAt();
+        $this->resource_link_id = $ltiContext->getResourceLinkId();
+        $this->nonce = $ltiContext->getNonce();
+        $this->save();
+
+        return $this;
     }
 
     /**

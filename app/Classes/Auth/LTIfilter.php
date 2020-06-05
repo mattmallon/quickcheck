@@ -36,6 +36,14 @@ class LTIFilter {
 
         $username = $context->getUserLoginId();
         $this->instructorLogin($username);
+
+        //M. Mallon, 6/3/20: add API token to model for existing users;
+        //we'll have to rewrite this function or remove it later, but don't want to forget this logic
+        $user = User::getUserFromUsername($username);
+        if (!$user->getApiToken()) {
+            $user->setApiToken();
+        }
+
         return false;
     }
 

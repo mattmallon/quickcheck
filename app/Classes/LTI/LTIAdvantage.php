@@ -51,7 +51,7 @@ class LTIAdvantage {
     }
 
     public function getLaunchValues() {
-        return $this->launchValues;
+        return (array) $this->launchValues;
     }
 
     public function initOauthToken() {

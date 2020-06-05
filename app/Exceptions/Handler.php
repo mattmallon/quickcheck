@@ -30,7 +30,7 @@ class Handler extends ExceptionHandler
         LtiLaunchDataMissingException::class,
         SessionMissingAssessmentDataException::class,
         SessionMissingStudentDataException::class,
-        SessionMissingLtiContextException::class,
+        MissingLtiContextException::class,
         OAuthExpiredTimestampException::class,
         GradePassbackException::class
     ];
@@ -102,7 +102,7 @@ class Handler extends ExceptionHandler
                 $message = $e->getMessage();
                 $this->logNotice($message, $errorId);
                 break;
-            case ($e instanceof SessionMissingLtiContextException):
+            case ($e instanceof MissingLtiContextException):
                 $message = $e->getMessage();
                 $data = $this->getErrorRequest();
                 $this->logNotice($message . $data, $errorId);

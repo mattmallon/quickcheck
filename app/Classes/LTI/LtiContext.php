@@ -11,7 +11,6 @@ use App\Models\Student;
 use App\Exceptions\LtiLaunchDataMissingException;
 use App\Exceptions\SessionMissingAssessmentDataException;
 use App\Exceptions\SessionMissingStudentDataException;
-use App\Exceptions\SessionMissingLtiContextException;
 
 class LtiContext {
 
@@ -34,7 +33,7 @@ class LtiContext {
             return false;
         }
 
-        return $this->launchValues[$this->customKey]['canvas_assignment_id'];
+        return $this->launchValues[$this->customKey]->canvas_assignment_id;
     }
 
     public function getAssignmentTitle()
@@ -43,7 +42,7 @@ class LtiContext {
             return false;
         }
 
-        return $this->launchValues[$this->customKey]['canvas_assignment_title'];
+        return $this->launchValues[$this->customKey]->canvas_assignment_title;
     }
 
     /**
@@ -63,7 +62,7 @@ class LtiContext {
         $blti = new BLTI();
         $ltiSessionData = $blti->getSessionContext();
         if (!$ltiSessionData) {
-            throw new SessionMissingLtiContextException;
+            //throw new SessionMissingLtiContextException;
         }
 
         $attemptData = $this->getAssessmentDataFromSession($request, $assessmentId);
@@ -84,7 +83,7 @@ class LtiContext {
             return false;
         }
 
-        return $this->launchValues[$this->contextKey]['id'];
+        return $this->launchValues[$this->contextKey]->id;
     }
 
     public function getCourseId()
@@ -93,7 +92,7 @@ class LtiContext {
             return false;
         }
 
-        return $this->launchValues[$this->customKey]['canvas_course_id'];
+        return $this->launchValues[$this->customKey]->canvas_course_id;
     }
 
     /**
@@ -103,13 +102,13 @@ class LtiContext {
     * @return string
     */
 
-    public function getCourseOfferingSourcedid($assessmentId)
+    public function getCourseOfferingSourcedid()
     {
         if (!$this->launchValues) {
             return false;
         }
 
-        return $this->launchValues[$this->lisKey]['course_offering_sourcedid'];
+        return $this->launchValues[$this->lisKey]->course_offering_sourcedid;
     }
 
     public function getDueAt()
@@ -118,7 +117,7 @@ class LtiContext {
             return false;
         }
 
-        return $this->launchValues[$this->customKey]['canvas_assignment_dueat'];
+        return $this->launchValues[$this->customKey]->canvas_assignment_dueat;
     }
 
     public function getGivenName()
@@ -146,7 +145,7 @@ class LtiContext {
     * @return string
     */
 
-    public function getNonce($assessmentId)
+    public function getNonce()
     {
         if (!$this->launchValues) {
             return false;
@@ -167,7 +166,7 @@ class LtiContext {
             return false;
         }
 
-        return $this->launchValues[$this->lisKey]['person_sourcedid'];
+        return $this->launchValues[$this->lisKey]->person_sourcedid;
     }
 
     /**
@@ -177,13 +176,13 @@ class LtiContext {
     * @return string
     */
 
-    public function getResourceLinkId($assessmentId)
+    public function getResourceLinkId()
     {
         if (!$this->launchValues) {
             return false;
         }
 
-        return $this->launchValues[$this->resourceLinkKey]['id'];
+        return $this->launchValues[$this->resourceLinkKey]->id;
     }
 
     public function getSectionId()
@@ -192,7 +191,7 @@ class LtiContext {
             return false;
         }
 
-        return $this->launchValues[$this->customKey]['canvas_coursesection_id'];
+        return $this->launchValues[$this->customKey]->canvas_coursesection_id;
     }
 
     public function getUserId()
@@ -201,7 +200,7 @@ class LtiContext {
             return false;
         }
 
-        return $this->launchValues[$this->customKey]['canvas_user_id'];
+        return $this->launchValues[$this->customKey]->canvas_user_id;
     }
 
     /**
@@ -216,7 +215,7 @@ class LtiContext {
             return false;
         }
 
-        return $this->launchValues[$this->customKey]['canvas_user_login_id'];
+        return $this->launchValues[$this->customKey]->canvas_user_login_id;
     }
 
     /**
@@ -464,6 +463,11 @@ class LtiContext {
         if (!$student->getLisPersonSourcedId()) {
             $sourcedId = $this->getPersonSourcedid();
             $student->setLisPersonSourcedId($sourcedId);
+        }
+
+        //similar story as above for API tokens
+        if (!$student->getApiToken()) {
+            $student->setApiToken();
         }
     }
 

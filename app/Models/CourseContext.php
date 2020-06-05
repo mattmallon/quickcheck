@@ -23,6 +23,23 @@ class CourseContext extends Eloquent {
     /************************************************************************/
 
     /**
+    * Find a course context from database by the LTI context ID
+    *
+    * @param  string $contexdtId
+    * @return CourseContext
+    */
+
+    public static function findByLtiContextId($contextId)
+    {
+        $courseContext = CourseContext::where('lti_context_id', '=', $contextId)->first();
+        if (!$courseContext) {
+            abort(500, 'Existing course context could not be found.');
+        }
+
+        return $courseContext;
+    }
+
+    /**
     * Format course context information into an array for CSV export
     *
     * @param  []  $courseData

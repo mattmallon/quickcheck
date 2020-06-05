@@ -4,10 +4,11 @@ use Illuminate\Database\Eloquent\Model as Eloquent;
 use App\Classes\ExternalData\CanvasAPI;
 use Session;
 use Log;
+use Illuminate\Support\Str;
 
 class User extends Eloquent {
     protected $table = 'users';
-    protected $fillable = ['admin'];
+    protected $fillable = ['admin', 'api_token'];
 
     public function memberships() {
         return $this->hasMany('App\Models\Membership');
@@ -34,44 +35,14 @@ class User extends Eloquent {
     }
 
     /**
-    * Determine if the current logged-in user has admin privileges
+    * Return the Quick Check-specific API token of the user
     *
-    * @return boolean
+    * @return str
     */
 
-    public static function isAdmin() {
-        $username = Session::get('user');
-        $user = User::where('username', '=', $username)->first();
-        if (!$user) {
-            Log::error('User not found in database. User is: ' . $username);
-            abort(500, 'User not found');
-        }
-
-        if ($user->admin == 'true') {
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
-
-    /**
-    * Save a new user (instructor or staff only)
-    *
-    * @param  string  $username
-    * @return mixed   User on success, false if user already exists
-    */
-
-    public static function saveUser($username) {
-        $new_user = new User;
-        if (User::where('username', '=', $username)->get()->count() > 0) {
-            return false;
-        }
-        else {
-            $new_user->username = $username;
-            $new_user->save();
-            return $new_user;
-        }
+    public function getApiToken()
+    {
+        return $this->api_token;
     }
 
     /**
@@ -110,16 +81,20 @@ class User extends Eloquent {
     }
 
     /**
-    * Determine if user is a student who has accessed results from the left nav
+    * Return the user based on username
     *
-    * @return boolean
+    * @param  string  $username
+    * @return User
     */
 
-    public static function isStudentViewingResults() {
-        if (Session::has('student')) {
-            return true;
+    public static function getUserFromUsername($username)
+    {
+        $user = User::where('username', '=', $username)->first();
+        if (!$user) {
+            Log::error('User not found in database. User is: ' . $username);
+            abort(500, 'User not found');
         }
-        return false;
+        return $user;
     }
 
     /**
@@ -143,6 +118,73 @@ class User extends Eloquent {
             $user['group'] = $this->matchUserToGroup($user['id'], $groups);
         }
         return $users;
+    }
+
+    /**
+    * Determine if the current logged-in user has admin privileges
+    *
+    * @return boolean
+    */
+
+    public static function isAdmin() {
+        $username = Session::get('user');
+        $user = User::where('username', '=', $username)->first();
+        if (!$user) {
+            Log::error('User not found in database. User is: ' . $username);
+            abort(500, 'User not found');
+        }
+
+        if ($user->admin == 'true') {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    /**
+    * Determine if user is a student who has accessed results from the left nav
+    *
+    * @return boolean
+    */
+
+    public static function isStudentViewingResults() {
+        if (Session::has('student')) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+    * Save a new user (instructor or staff only)
+    *
+    * @param  string  $username
+    * @return mixed   User on success, false if user already exists
+    */
+
+    public static function saveUser($username) {
+        $new_user = new User;
+        if (User::where('username', '=', $username)->get()->count() > 0) {
+            return false;
+        }
+        else {
+            $new_user->username = $username;
+            $new_user->api_token = Str::random(60);
+            $new_user->save();
+            return $new_user;
+        }
+    }
+
+    /**
+    * Update an existing user to add an API token, which was not formerly saved on this model
+    *
+    * @return void
+    */
+
+    public function setApiToken()
+    {
+        $this->api_token = Str::random(60);
+        $this->save();
     }
 
     /************************************************************************/
