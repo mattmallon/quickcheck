@@ -59,6 +59,19 @@ class Student extends Eloquent {
     }
 
     /**
+    * Retrieve student from database by API token
+    *
+    * @param  string $apiToken
+    * @return Student
+    */
+
+    public static function findByApiToken($apiToken)
+    {
+        $student = Student::where('api_token', $apiToken)->firstOrFail();
+        return $student;
+    }
+
+    /**
     * Return the Quick Check-specific API token of the student
     *
     * @return str

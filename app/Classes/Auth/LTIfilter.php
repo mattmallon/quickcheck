@@ -28,6 +28,8 @@ class LTIFilter {
     {
         $context = new LtiContext;
         $context->initContext($this->request);
+        //add decoded LTI launch values to request so they can be retrieved in the controller, etc.
+        $this->request->merge(['ltiLaunchValues' => $context->getLaunchValues()]);
 
         if (!$context->isInstructor()) {
             //return redirect url for user not found if a student tries to access this route
@@ -35,7 +37,6 @@ class LTIFilter {
         }
 
         $username = $context->getUserLoginId();
-        $this->instructorLogin($username);
 
         //M. Mallon, 6/3/20: add API token to model for existing users;
         //we'll have to rewrite this function or remove it later, but don't want to forget this logic
@@ -57,16 +58,10 @@ class LTIFilter {
     {
         $context = new LtiContext;
         $context->initContext($this->request);
-        $username = $context->getUserLoginId();
+        //add decoded LTI launch values to request so they can be retrieved in the controller, etc.
+        $this->request->merge(['ltiLaunchValues' => $context->getLaunchValues()]);
 
-        if ($context->isInstructor()) {
-            $this->instructorLogin($username);
-            return false;
-        }
-        else {
-            $this->studentLogin($username);
-            return false;
-        }
+        return false;
     }
 
     /************************************************************************/

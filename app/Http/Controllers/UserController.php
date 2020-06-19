@@ -134,6 +134,17 @@ class UserController extends \BaseController
     }
 
     /**
+    * Return a token to a user authenticating for the first time this session
+    *
+    * @return JSON response
+    */
+
+    public function getToken(Request $request)
+    {
+        //TODO: implement
+    }
+
+    /**
     * Return all users in a course from Canvas (to ensure grade passback can be achieved for student)
     *
     * @param  courseId (string)

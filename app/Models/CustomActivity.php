@@ -78,7 +78,7 @@ class CustomActivity extends Eloquent {
     */
 
     private function isGroupRequired() {
-        if ($this->group_required === 'true' && LtiContext::isInLtiContext()) {
+        if ($this->group_required === 'true') {
             return true;
         }
         else {

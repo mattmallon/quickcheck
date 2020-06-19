@@ -5,25 +5,26 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Contracts\Auth\Guard;
 use App\Classes\Auth\LTIFilter;
-use Session;
+use App\Models\Student;
 
 class ManageAuthenticate {
     public function handle($request, Closure $next)
     {
         $redirectUrl = false;
+        $apiToken = $request->bearerToken();
 
         //LTI POST launch
-        //TODO: do we always prioritize this? The else if below for session otherwise is not going to be reached
-        //unless I switch the order around.
         if ($request->isMethod('post')) {
             $ltiFilter = new LTIFilter($request);
             $redirectUrl = $ltiFilter->manageFilter();
         }
-        //student or instructor has been authorized already in LTI post launch
-        else if (Session::has('user') || Session::has('student')) {
-            //let 'em go on by, nothing to do here
+        //authenticated student passing in API token
+        else if ($apiToken) {
+            //TODO: can this accept an object or does it have to be an array/basic value?
+            $student = Student::findByApiToken($apiToken);
+            $request->merge(['student' => $student]);
         }
-        //not an LTI launch and no existing session -- either an intruder, or more likely, the session simply expired
+        //not an LTI launch and no API token -- either an intruder, or more likely, the session simply expired
         else {
             if ($request->is('api/*')) { //if an API request, send JSON error message
                 $redirectUrl = 'api/sessionnotvalid';

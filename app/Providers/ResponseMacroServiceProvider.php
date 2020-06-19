@@ -23,7 +23,7 @@ class ResponseMacroServiceProvider extends ServiceProvider {
             ]);
         });
 
-        Response::macro('error', function($status = 400, $errorList = []) {
+        Response::macro('error', function($status = 400, $errorList = [], $data = null) {
             //cannot access properties on $this, so need to define these here
             $errorReasons = [
                 '400' => 'The data in your request was not properly formatted.',
@@ -38,7 +38,8 @@ class ResponseMacroServiceProvider extends ServiceProvider {
 
             return Response::json([
                 'error' => true,
-                'errorList' => $errorList
+                'errorList' => $errorList,
+                'data' => $data
             ], $status);
         });
     }

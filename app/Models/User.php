@@ -26,12 +26,29 @@ class User extends Eloquent {
     */
 
     public static function doesUserExist($username) {
+        if (!$username) {
+            return false;
+        }
+
         $result = User::where('username', '=', $username);
         if ($result->count() === 1) {
             return true;
         }
 
         return false;
+    }
+
+    /**
+    * Retrieve user from database by API token
+    *
+    * @param  string $apiToken
+    * @return User
+    */
+
+    public static function findByApiToken($apiToken)
+    {
+        $user = User::where('api_token', $apiToken)->firstOrFail();
+        return $usert;
     }
 
     /**
@@ -89,6 +106,10 @@ class User extends Eloquent {
 
     public static function getUserFromUsername($username)
     {
+        if (!$username) {
+            return false;
+        }
+
         $user = User::where('username', '=', $username)->first();
         if (!$user) {
             Log::error('User not found in database. User is: ' . $username);
@@ -140,19 +161,6 @@ class User extends Eloquent {
         else {
             return false;
         }
-    }
-
-    /**
-    * Determine if user is a student who has accessed results from the left nav
-    *
-    * @return boolean
-    */
-
-    public static function isStudentViewingResults() {
-        if (Session::has('student')) {
-            return true;
-        }
-        return false;
     }
 
     /**

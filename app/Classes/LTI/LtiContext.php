@@ -86,6 +86,12 @@ class LtiContext {
         return $this->launchValues[$this->contextKey]->id;
     }
 
+    /**
+    * Get the Canvas course ID
+    *
+    * @return string
+    */
+
     public function getCourseId()
     {
         if (!$this->launchValues) {
@@ -98,7 +104,6 @@ class LtiContext {
     /**
     * Get the course offering sourcedid for the current launch
     *
-    * @param  int  $assessmentId
     * @return string
     */
 
@@ -111,6 +116,12 @@ class LtiContext {
         return $this->launchValues[$this->lisKey]->course_offering_sourcedid;
     }
 
+    /**
+    * Get due at value for current launch
+    *
+    * @return string
+    */
+
     public function getDueAt()
     {
         if (!$this->launchValues) {
@@ -119,6 +130,12 @@ class LtiContext {
 
         return $this->launchValues[$this->customKey]->canvas_assignment_dueat;
     }
+
+    /**
+    * Get student's given name for the current launch
+    *
+    * @return string
+    */
 
     public function getGivenName()
     {
@@ -129,6 +146,12 @@ class LtiContext {
         return $this->launchValues['given_name'];
     }
 
+    /**
+    * Get student's family name for the current launch
+    *
+    * @return string
+    */
+
     public function getFamilyName()
     {
         if (!$this->launchValues) {
@@ -136,6 +159,17 @@ class LtiContext {
         }
 
         return $this->launchValues['family_name'];
+    }
+
+    /**
+    * Get decoded launch values from JWT after it's been unencrypted
+    *
+    * @return []
+    */
+
+    public function getLaunchValues()
+    {
+        return $this->launchValues;
     }
 
     /**
@@ -172,7 +206,6 @@ class LtiContext {
     /**
     * Get the resource link ID for the current launch
     *
-    * @param  int  $assessmentId
     * @return string
     */
 
@@ -185,6 +218,12 @@ class LtiContext {
         return $this->launchValues[$this->resourceLinkKey]->id;
     }
 
+    /**
+    * Get section ID for the current launch
+    *
+    * @return string
+    */
+
     public function getSectionId()
     {
         if (!$this->launchValues) {
@@ -193,6 +232,12 @@ class LtiContext {
 
         return $this->launchValues[$this->customKey]->canvas_coursesection_id;
     }
+
+    /**
+    * Get user's Canvas ID for the current launch
+    *
+    * @return string
+    */
 
     public function getUserId()
     {
@@ -227,7 +272,8 @@ class LtiContext {
     public function initContext(Request $request)
     {
         $lti = new LTIAdvantage();
-        $this->launchValues = $lti->getLaunchValues();
+        $launchValues = $lti->getLaunchValues();
+        $this->setLaunchValues($launchValues);
         $this->validateLaunch();
         $this->initUserContext();
         $this->initCourseContext();
@@ -239,10 +285,9 @@ class LtiContext {
     * @return boolean
     */
 
-    public static function isInLtiContext()
+    public function isInLtiContext()
     {
-        $blti = new BLTI();
-        if ($blti->isInLtiContext()) {
+        if ($this->launchValues) {
             return true;
         }
 
@@ -255,14 +300,42 @@ class LtiContext {
     * @return boolean
     */
 
-    public static function isInstructor()
+    public function isInstructor()
     {
-        $blti = new BLTI();
-        $isInstructor = $blti->isInstructor();
-        //also include course designer role, for instructional designers/developers
-        $isDesigner = $blti->isDesigner();
-        $allowAccess = $isInstructor || $isDesigner ? true : false;
-        return $allowAccess;
+        if (!$this->launchValues) {
+            return false;
+        }
+
+        $roles = $this->launchValues[$this->rolesKey];
+        foreach ($roles as $role) {
+            $role = strtolower($role);
+            if (strpos($role, 'membership#instructor')) {
+                return true;
+            }
+
+            if (strpos($role, 'membership#contentdeveloper')) {
+                return true;
+            }
+
+            if (strpos($role, 'administrator')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+    * Given an array of LTI launch values (after being decoded in JWT), set them on the object
+    * for future calls to retrieve launch values
+    *
+    * @param  []  $launchValues
+    * @return void
+    */
+
+    public function setLaunchValues($launchValues)
+    {
+        $this->launchValues = $launchValues;
     }
 
     /**

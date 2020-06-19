@@ -1,8 +1,10 @@
 <?php
 use Illuminate\Http\Request;
 use App\Classes\LTI\LtiContext;
+use App\Models\Student;
 use App\Models\User;
 use App\Classes\LTI\LtiConfig;
+use App\Classes\Auth\CASFilter;
 
 class HomeController extends BaseController
 {
@@ -26,33 +28,93 @@ class HomeController extends BaseController
     public function home(Request $request)
     {
         $ltiContext = new LtiContext;
-        $isInstructor = $ltiContext->isInstructor();
-        $isLti = $ltiContext->isInLtiContext();
-
-        //$contextId = $ltiContext->getContextIdFromSession();
+        $ltiContext->setLaunchValues($request->ltiLaunchValues); //will be NULL if not an LTI launch
+        $isLtiLaunch = $ltiContext->isInLtiContext();
+        $isInstructor = false;
+        $role = null;
+        $user = null;
+        $nonce = null;
         $contextId = null;
+        $redirectForAuth = false;
 
-        //if a student, redirect to their view with context ID as query param
-        if (User::isStudentViewingResults()) {
-            return redirect('student?context=' . $contextId);
-        }
-        //if an instructor and an LTI launch, redirect so context id is passed as query param;
-        //query param ensures user can have multiple courses open in different tabs simultaneously
-        else if ($isInstructor && $isLti) {
-            if ($request->has("context")) { //after the redirect grab the query param
-                return displaySPA();
+        //if coming directly from an LTI launch, redirect to either student or instructor page depending
+        //on role. add query params and redirect so user can authenticate and obtain an API token if needed.
+        if ($isLtiLaunch) {
+            $contextId = $ltiContext->getContextId();
+            $isInstructor = $ltiContext->isInstructor();
+            $role = $isInstructor ? 'instructor' : 'student';
+            $nonce = $ltiContext->getNonce();
+
+            if ($isInstructor) {
+                $username = $ltiContext->getUserLoginId();
+                $user = User::getUserFromUsername($username);
             }
-            else { //when we hit the route initially, need to add a query param on for context
-                $redirectUrl = 'home?context=' . $contextId;
-                if ($request->has('sessionexpired')) { //if redirected due to session error
-                    $redirectUrl .= '&sessionexpired=true';
-                }
-                return redirect($redirectUrl);
+            else {
+                $canvasUserId = $ltiContext->getUserId();
+                $user = Student::findByCanvasUserId($canvasUserId);
             }
+
+            $redirectForAuth = true;
         }
-        //if an instructor and launching from CAS
-        else if (User::getCurrentUser()) {
+
+        //if already in an LTI context, display the page, and the front-end will either send
+        //authenticated API requests if API token present, or request an API token given query params;
+        //if user is unauthorized, they won't receive data without an API token and can't authenticate
+        //without valid query params that match up with the cache; cache is removed as soon as it's
+        //used in a valid request by an instructor coming off of an LTI launch.
+        if ($request->has("context")) {
             return displaySPA();
+        }
+
+        //casticket present in query params; do CAS lookup to verify user is authorized and an existing instructor.
+        //append query params and redirect, using the same formula as used in an LTI launch.
+        if ($request->has('casticket')) {
+            $casFilter = new CASFilter();
+            $casTicket = $request->get('casticket');
+            $username = $casFilter->getUsernameFromCasTicket($casTicket);
+            $user = User::getUserFromUsername($username);
+            if (!$user) {
+                return redirect('usernotfound');
+            }
+
+            $isInstructor = true; //we only get here if user already present in users table from previous instructor LTI launch
+            $role = 'instructor';
+            $nonce = 'cas-' . $casTicket;
+            $redirectForAuth = true;
+        }
+
+        //if we have a valid LTI launch or CAS redirect, cache the nonce, role, and user ID, and redirect for auth
+        //to obtain an API token. then remove that item from the cache so it can only be used once per launch.
+        if ($redirectForAuth) {
+            //prefix nonce with role to prevent spoofing of query params. we need to know if a student or an
+            //instructor because they are in separate database tables/models. however, if a user alters the
+            //query params from "student" to "instructor" when obtaining an API token, and they have a valid
+            //nonce from a launch that hasn't been removed yet from the cache, AND their user ID happens to be
+            //the same as an instructor, there's a small chance they could get an instructor's API token. it's
+            //incredibly unlikely, but this extra bit of security will make sure that it's impossible and that
+            //what is in the query params is matching exactly what we have already put in the back-end cache.
+            $userId = $user->id;
+            Cache::put($role . '-' . $nonce, $userId, now()->addMinutes(5));
+
+            $redirectUrl = $isInstructor ? 'home' : 'student';
+            $redirectUrl .= ('?role=' . $role);
+            $redirectUrl .= ('&userId=' . $userId);
+            $redirectUrl .= ('&nonce=' . $nonce);
+            if ($contextId) {
+                $redirectUrl .= ('&context=' . $contextId);
+            }
+
+            return redirect($redirectUrl);
+        }
+
+        //if no auth whatsoever, it's an initial home page visit when CAS authenticating but not authenticated yet
+        $casFilter = new CASFilter();
+        if ($casFilter->casEnabled()) {
+            $redirectUrl = $casFilter->getRedirectUrl();
+            return redirect($redirectUrl);
+        }
+        else {
+            abort(403, 'Unauthorized: please launch the tool from an external tool launch in Canvas.');
         }
     }
 

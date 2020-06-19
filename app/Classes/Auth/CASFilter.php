@@ -1,13 +1,15 @@
 <?php
 
 namespace App\Classes\Auth;
-use Session;
 use App;
 use Redirect;
 use App\Models\User;
 
 class CASFilter
 {
+    private $permissionCode = "ANY";
+    //TODO: if this doesn't work with env, may have to create a constructor function
+    private $appUrl = env('APP_URL') . '/home';
 
     /************************************************************************/
     /* PUBLIC FUNCTIONS *****************************************************/
@@ -22,9 +24,8 @@ class CASFilter
 
     public function casEnabled()
     {
-        $appUrl = env('APP_URL');
         $currentEnvironment = env('APP_ENV');
-        if (strpos($appUrl, 'iu.edu') !== false || $currentEnvironment === 'local' || $currentEnvironment === 'dev') {
+        if (strpos($this->appUrl, 'iu.edu') !== false || $currentEnvironment === 'local' || $currentEnvironment === 'dev') {
             return true;
         }
 
@@ -34,48 +35,41 @@ class CASFilter
     /**
     * Redirect for CAS authentication
     *
-    * @param  Route  $route
     * @return mixed (string: $redirectUrl, if needs redirect; otherwise, bool, false if no redirect needed)
     */
 
-    public function getRedirectUrl($route)
+    public function getRedirectUrl()
     {
         //See this page for the example: https://github.iu.edu/UITS-IMS/CasIntegrationExamples/blob/master/php_cas_example%203.php
         //KB on CAS: https://kb.iu.edu/d/atfc
 
-        $authenticated = Session::has('CAS');
-        $permissionCode = "ANY";
-        $baseUrl = env('APP_URL');
-        $appUrl = $this->getAppUrl($baseUrl, $route);
-
+        //for local dev environment, don't go through CAS flow, redirect on to home page and the cas ticket
+        //will not be authenticated if that environment, test instructor credentials will be set instead.
         if (App::environment('local')) {
-            $this->setLocalAuth();
+            return $this->appUrl . '?casticket=localdevdummyvalue';
         }
 
-        if ($this->isLoggedIn()) {
-            return false;
+        if (!isset($_GET["casticket"])) {
+            return $this->redirectCasLogin();
         }
 
-        if (!$authenticated || !isset($_GET["casticket"])) {
-            return $this->redirectCasLogin($permissionCode, $appUrl);
-        }
+        //we shouldn't get to this point, but just in case...
+        return 'usernotfound';
+    }
 
-        $casAnswer = $this->getCasAnswer($permissionCode, $appUrl);
+    public function getUsernameFromCasTicket($casTicket)
+    {
+        $casAnswer = $this->getCasAnswer();
         //split CAS answer into access and user
         list($access,$username) = explode("\n",$casAnswer,2);
         $access = trim($access);
         $username = trim($username);
 
         if ($access !== "yes") {
-            return $baseUrl;
+            return false;
         }
 
-        if (!User::doesUserExist($username)) {
-            return 'usernotfound';
-        }
-
-        $this->login($username);
-        return false;
+        return $username;
     }
 
     /************************************************************************/
@@ -85,18 +79,16 @@ class CASFilter
     /**
     * Send cURL request for CAS answer
     *
-    * @param  string  $permissionCode
-    * @param  string  $rootUrl
     * @return [] $casAnswer
     */
 
-    private function getCasAnswer($permissionCode, $rootUrl)
+    private function getCasAnswer($casTicket)
     {
         //set up validation URL to ask CAS if ticket is good
         $_url = 'https://cas.iu.edu/cas/validate';
-        $cassvc = $permissionCode;
-        $casurl = $rootUrl;
-        $params = "cassvc=$cassvc&casticket=$_GET[casticket]&casurl=$casurl";
+        $cassvc = $this->permissionCode;
+        $casurl = $this->appUrl;
+        $params = "cassvc=$cassvc&casticket=$casTicket&casurl=$casurl";
         $urlNew = "$_url?$params";
 
         //CAS sending response on 2 lines. First line contains "yes" or "no". If "yes", second line contains username (otherwise, it is empty).
@@ -113,59 +105,14 @@ class CASFilter
     }
 
     /**
-    * Get app url to redirect back to; can include route params for intended route if user wasn't logged in;
-    * i.e., if the user was trying to go to edit a quick check, but their session expired, they can log back
-    * in through CAS and get redirected to where they were trying to go, rather than to the default homepage.
-    *
-    * @param  string  $baseUrl
-    * @param  Route  $route
-    * @return string $appUrl
-    */
-
-    private function getAppUrl($baseUrl, $route)
-    {
-        $path = $route->uri();
-        $param = $route->parameter('id');
-        $newPath = str_replace('{id}', $param, $path);
-        $appUrl = $baseUrl . $newPath;
-        return $appUrl;
-    }
-
-    /**
-    * Check for existing session to see if the user is logged in
-    *
-    * @return boolean
-    */
-
-    private function isLoggedIn()
-    {
-        //if already logged in, or in local environment, allow user to continue on without CAS redirect
-        return Session::get('user') || App::environment('local') ? true : false;
-    }
-
-    /**
-    * Create session for a newly logged-in user
-    *
-    * @return void
-    */
-
-    private function login($username)
-    {
-        Session::put('user', $username);
-    }
-
-    /**
     * Redirect to the CAS login page if the user is not currently logged in
     *
-    * @param  string  $permissionCode
-    * @param  string  $rootUrl
     * @return string $redirectUrl
     */
 
-    private function redirectCasLogin($permissionCode, $rootUrl)
+    private function redirectCasLogin()
     {
-        Session::put('CAS', true);
-        $redirectUrl = 'https://cas.iu.edu/cas/login?cassvc=' . $permissionCode . '&casurl=' . $rootUrl;
+        $redirectUrl = 'https://cas.iu.edu/cas/login?cassvc=' . $this->permissionCode . '&casurl=' . $this->appUrl;
         return $redirectUrl;
     }
 

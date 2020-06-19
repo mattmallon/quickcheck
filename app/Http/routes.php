@@ -29,6 +29,25 @@ Route::post('assessment/', 'AssessmentController@showLTI'); //id included as que
 Route::get('lticonfig', 'HomeController@returnLtiConfig');
 Route::post('logininitiations', 'HomeController@initializeOIDC');
 
+//Student results and instructor management views;
+//with session-less architecture, these need to be public.
+//No data is displayed on the front-end until an API call
+//successfully returns, given a valid token. On failure, redirect
+//to home page for authentication. An API token is not included
+//on a browser GET request to view a page, so these need to be available.
+//LTI POST launches are separate, they require middleware to authenticate LTI first.
+Route::get('student', 'ReleaseController@contextReleaseIndex'); //student home page (redirected from home)
+//instructor views
+Route::get('assessment/{id}/edit', 'AssessmentController@edit');
+Route::get('collection', 'CollectionController@indexView');
+Route::get('collection/{id}', 'CollectionController@show');
+Route::get('home', 'HomeController@home');
+Route::get('/', 'HomeController@home');
+Route::get('manage', 'AttemptController@manageOverview');
+Route::get('assessment/{id}/attempts/{assignmentId?}', 'AttemptController@manageAttempts');
+Route::get('student/{studentId}/attempts', 'AttemptController@viewAttemptsForStudent');
+Route::get('select', 'CollectionController@viewSelectLink');
+
 //errors
 Route::get('usernotfound', 'UserController@userNotFound');
 Route::get('sessionnotvalid', 'UserController@sessionNotValid');
@@ -72,6 +91,9 @@ Route::group(['prefix' => 'api'], function() {
     //Third party cookie check
     Route::get('checkcookies', 'UserController@checkCookies');
     Route::get('establishcookietrust', 'UserController@establishCookieTrust');
+
+    //Authenticate to obtain an API token
+    Route::post('token', 'UserController@getToken');
 });
 
 /********************************************************************/
@@ -79,9 +101,7 @@ Route::group(['prefix' => 'api'], function() {
 /********************************************************************/
 
 Route::group(['middleware' => ['manageAuth']], function() {
-    //views
-    Route::post('home', 'HomeController@home'); //LTI manage launch URL
-    Route::get('student', 'ReleaseController@contextReleaseIndex'); //student home page (redirected from home)
+    Route::post('home', 'HomeController@home'); //LTI manage launch URL: middleware required to validate LTI launch
 
     //student api endpoints
     Route::group(array('prefix' => 'api'), function() {
@@ -95,38 +115,17 @@ Route::group(['middleware' => ['manageAuth']], function() {
 /********************************************************************/
 
 Route::group(array('middleware' => array('auth')), function() {
+    Route::post('select', 'CollectionController@selectLink'); //select QC to embed : middleware required to validate LTI launch
 
-    //assessment views
-    Route::get('assessment/{id}/edit', 'AssessmentController@edit');
-
-    //collection views
-    Route::get('collection', 'CollectionController@indexView');
-    Route::get('collection/{id}', 'CollectionController@show');
-
+    //TODO: need to figure out an auth mechanism for this, perhaps exchange API token for temp cached auth token in query param;
+    //Or a form POST in new tab, include API token in a request field instead of header.
     //CSV downloads
     Route::get('attempts/csv/download/{context_id}/{student_id?}', 'CSVController@exportCourseAttempts');
     Route::get('attempts/csv/download/context/{context_id}/assessment/{assessment_id}', 'CSVController@exportAssessmentAttempts');
     Route::get('responses/csv/download/assessment/{assessment_id}/context/{context_id}', 'CSVController@exportAssessmentResponses');
     Route::get('users/csv/groups/course/{courseId}', 'CSVController@getUsersInGroups');
-
-    //home page
-    Route::get('home', 'HomeController@home');
-    Route::get('/', 'HomeController@home');
-
-    //manage views
-    //instructor manage view to see overview of student results; includes query param for LTI context ID
-    Route::get('manage', 'AttemptController@manageOverview');
-    //instructor manage view to see attempts for a specific assessment in an LTI context
-    Route::get('assessment/{id}/attempts/{assignmentId?}', 'AttemptController@manageAttempts');
-    //instructor manage view to see attempts for a specific student in an LTI context
-    Route::get('student/{studentId}/attempts', 'AttemptController@viewAttemptsForStudent');
-
     //QTI downloads
     Route::post('exportQTI', 'QtiController@exportQTI');
-
-    //select an LTI link in Canvas
-    Route::post('select', 'CollectionController@selectLink');
-    Route::get('select', 'CollectionController@viewSelectLink');
 
     /********************************************************************/
     /****** INSTRUCTOR API **********************************************/
