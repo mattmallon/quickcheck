@@ -18,9 +18,8 @@ class QtiController extends \BaseController
     */
 
     public function createImportedQuizzes(Request $request) {
-        $input = $request->all();
         $qti = new QTI();
-        $response = $qti->saveImportedQuizzes($input);
+        $response = $qti->saveImportedQuizzes($request);
         return response()->success($response);
     }
 
@@ -32,9 +31,8 @@ class QtiController extends \BaseController
 
     public function exportQTI(Request $request) {
         //NOTE: assuming that on the front-end, only non-custom-assessments were selectable
-        $input = $request->all();
         $qti = new QTI();
-        $downloadLocation = $qti->exportQTI($input);
+        $downloadLocation = $qti->exportQTI($request);
         if ($downloadLocation) {
             return Response::download($downloadLocation);
         }

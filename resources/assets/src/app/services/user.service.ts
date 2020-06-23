@@ -9,6 +9,8 @@ import { HttpHeaders } from '@angular/common/http';
 })
 export class UserService {
 
+  apiToken = null;
+
   constructor(private httpClient: HttpClient, private httpService: HttpService) { }
 
   async addAdmin(data) {
@@ -79,6 +81,10 @@ export class UserService {
     return await this.httpClient.delete(path, options)
       .pipe(timeout(timeoutLength))
       .toPromise();
+  }
+
+  setApiToken(apiToken) {
+    this.apiToken = apiToken;
   }
 
   async validateUser(data) {

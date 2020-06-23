@@ -22,8 +22,9 @@ class CollectionFeatureController extends \BaseController
     {
         $collection = Collection::find($collectionId);
         $collectionFeatures = null;
+        $user = $request->user;
 
-        if (User::isAdmin()) {
+        if ($user->isAdmin()) {
             $collectionFeatures = $collection->collectionFeatures()
                 ->with('feature')
                 ->get();
@@ -52,12 +53,13 @@ class CollectionFeatureController extends \BaseController
         $featureToUpdate = $request->input('collectionFeature');
         $collectionId = $featureToUpdate['collection_id'];
         $collection = Collection::findOrFail($collectionId);
-        if (!$collection->canUserWrite()) {
+        if (!$collection->canUserWrite($request->user)) {
             return response()->error(403);
         }
 
+        $user = $request->user;
         $collectionFeature = CollectionFeature::with('feature')->findOrFail($id);
-        if ($collectionFeature->feature->admin_only === 'true' && !User::isAdmin()) {
+        if ($collectionFeature->feature->admin_only === 'true' && !$user->isAdmin()) {
             return response()->error(403);
         }
 

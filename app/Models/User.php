@@ -2,7 +2,6 @@
 namespace App\Models;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use App\Classes\ExternalData\CanvasAPI;
-use Session;
 use Log;
 use Illuminate\Support\Str;
 
@@ -48,7 +47,7 @@ class User extends Eloquent {
     public static function findByApiToken($apiToken)
     {
         $user = User::where('api_token', $apiToken)->firstOrFail();
-        return $usert;
+        return $user;
     }
 
     /**
@@ -68,18 +67,8 @@ class User extends Eloquent {
     * @return User
     */
 
-    public static function getCurrentUser() {
-        $username = Session::get('user');
-        if (!$username) {
-            abort(500, 'Session expired.');
-        }
-
-        $user = User::where('username', '=', $username)->first();
-        if (!$user) {
-            Log::error('User not found in database. User is: ' . $username);
-            abort(500, 'User not found');
-        }
-        return $user;
+    public static function getCurrentUser(Request $request) {
+        return $request->user;
     }
 
     /**
@@ -88,13 +77,8 @@ class User extends Eloquent {
     * @return string
     */
 
-    public static function getCurrentUsername() {
-        if (!Session::has('user')) {
-            abort(500, 'User not currently logged in.');
-            return false;
-        }
-
-        return Session::get('user');
+    public static function getCurrentUsername(Request $request) {
+        return $request->user->username;
     }
 
     /**
@@ -112,8 +96,7 @@ class User extends Eloquent {
 
         $user = User::where('username', '=', $username)->first();
         if (!$user) {
-            Log::error('User not found in database. User is: ' . $username);
-            abort(500, 'User not found');
+            return null;
         }
         return $user;
     }
@@ -147,15 +130,8 @@ class User extends Eloquent {
     * @return boolean
     */
 
-    public static function isAdmin() {
-        $username = Session::get('user');
-        $user = User::where('username', '=', $username)->first();
-        if (!$user) {
-            Log::error('User not found in database. User is: ' . $username);
-            abort(500, 'User not found');
-        }
-
-        if ($user->admin == 'true') {
+    public function isAdmin() {
+        if ($this->admin == 'true') {
             return true;
         }
         else {
@@ -175,12 +151,11 @@ class User extends Eloquent {
         if (User::where('username', '=', $username)->get()->count() > 0) {
             return false;
         }
-        else {
-            $new_user->username = $username;
-            $new_user->api_token = Str::random(60);
-            $new_user->save();
-            return $new_user;
-        }
+
+        $new_user->username = $username;
+        $new_user->api_token = Str::random(60);
+        $new_user->save();
+        return $new_user;
     }
 
     /**

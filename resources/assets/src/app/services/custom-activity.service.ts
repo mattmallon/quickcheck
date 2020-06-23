@@ -8,6 +8,8 @@ import { HttpService } from './http.service';
 })
 export class CustomActivityService {
 
+  apiToken = null;
+
   constructor(private httpClient: HttpClient, private httpService: HttpService) { }
 
   async getCustomActivities() {
@@ -44,5 +46,9 @@ export class CustomActivityService {
     return await this.httpClient.delete(path)
       .pipe(timeout(timeoutLength))
       .toPromise();
+  }
+
+  setApiToken(apiToken) {
+    this.apiToken = apiToken;
   }
 }

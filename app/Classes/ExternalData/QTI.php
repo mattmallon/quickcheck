@@ -8,11 +8,11 @@ class QTI
     * Master function to export a QTI zip package, accessed publicly by controller.
     * Will return a response containing .zip file for download
     *
-    * @param  []  $input
+    * @param  Request  $request
     * @return Zip
     */
 
-    public function exportQTI($input)
+    public function exportQTI(Request $request)
     {
         $exportQTI = new ExportQTI();
         $zip = $exportQTI->export($input);
@@ -23,15 +23,15 @@ class QTI
     * Master function to import a QTI zip package, accessed publicly by controller.
     * Will return a response containing potential warnings and imported quizzes.
     *
-    * @param  []  $input
-    * @param  File  $zipFile
-    * @return [] $response
+    * @param  Request $request
+    * @param  File    $zipFile
+    * @return []      $response
     */
 
-    public function importQTI($input, $zipFile)
+    public function importQTI($request, $zipFile)
     {
         $importQTI = new ImportQTI();
-        $response = $importQTI->import($input, $zipFile);
+        $response = $importQTI->import($request, $zipFile);
         return $response;
     }
 
@@ -44,8 +44,9 @@ class QTI
     */
 
     //if critical warnings issued in import process, the user can choose whether or not to save the quizzes that DID import correctly
-    public function saveQuizzes($input)
+    public function saveQuizzes($request)
     {
+        $input = $request->all();
         $importQTI = new ImportQti();
         $response = $importQTI->saveQuizzes($input['quizzes']);
         return $response;

@@ -7,7 +7,6 @@ use DOMDocument;
 use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
 use App\Models\Assessment;
-use App\Models\User;
 use App\Models\AnswerTypes\MCAnswer;
 use App\Models\AnswerTypes\MatchingAnswer;
 use App\Models\AnswerTypes\MatrixAnswer;
@@ -29,6 +28,8 @@ class ExportQti {
     //location in storage where the unzipped QTI folder will temporarily live
     private $unzippedLocation = '';
 
+    private $user;
+
     /************************************************************************/
     /* PUBLIC FUNCTIONS *****************************************************/
     /************************************************************************/
@@ -37,12 +38,14 @@ class ExportQti {
     * Master function to export, publicly available
     * Will return a path to the .zip to download
     *
-    * @param  []  $input
-    * @return string $zipPath
+    * @param  Request $request
+    * @return string  $zipPath
     */
 
-    public function export($input)
+    public function export(Request $request)
     {
+        $input = $request->all();
+        $this->user = $request->user;
         $this->setDirNames();
         $assessmentIds = $input['assessments'];
         $assessments = [];
@@ -781,7 +784,7 @@ class ExportQti {
 
         //add manifest to root, along with a ton of attributes
         $manifest = $manifestDoc->appendChild($manifestDoc->createElement('manifest'));
-        $identifier = User::getCurrentUsername() . time(); //unique identifier
+        $identifier = $this->user->username . time(); //unique identifier
         $this->addAttribute($manifestDoc, 'identifier', $identifier, $manifest);
         $this->addAttribute($manifestDoc, 'xmlns', 'http://www.imsglobal.org/xsd/imsccv1p1/imscp_v1p1', $manifest);
         $this->addAttribute($manifestDoc, 'xmlns:lom', 'http://ltsc.ieee.org/xsd/imsccv1p1/LOM/resource', $manifest);
@@ -796,7 +799,7 @@ class ExportQti {
         $imsmd_lom = $metadata->appendChild($manifestDoc->createElement('imsmd:lom'));
         $imsmd_general = $imsmd_lom->appendChild($manifestDoc->createElement('imsmd:general'));
         $imsmd_title = $imsmd_general->appendChild($manifestDoc->createElement('imsmd:title'));
-        $imsmd_string = $imsmd_title->appendChild($manifestDoc->createElement('imsmd:string', 'QTI export for user ' . User::getCurrentUsername()));
+        $imsmd_string = $imsmd_title->appendChild($manifestDoc->createElement('imsmd:string', 'QTI export for user ' . $this->user->username));
         $imsmd_lifecycle = $imsmd_lom->appendChild($manifestDoc->createElement('imsmd:lifeCycle'));
         $imsmd_contribute = $imsmd_lifecycle->appendChild($manifestDoc->createElement('imsmd:contribute'));
         $imsmd_date = $imsmd_contribute->appendChild($manifestDoc->createElement('imsmd:date'));
@@ -979,7 +982,7 @@ class ExportQti {
     {
         //get the zip file, unzip it in a directory named for the logged in user
         //all QTI imports temporarily go into a folder based on the username
-        $username = User::getCurrentUsername();
+        $username = $this->user->username;
         $this->parentDirName = $username;
         //unix timestamp and username for unique filename; pretty much impossible for the same user to upload from two
         //machines at roughly the same time, so we might not 100% need this, but crazier things have happened!

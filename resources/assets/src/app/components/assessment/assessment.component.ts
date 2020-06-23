@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { UtilitiesService } from '../../services/utilities.service';
 import { AssessmentService } from '../../services/assessment.service';
+import { AuthService } from '../../services/auth.service';
 import { CaliperService } from '../../services/caliper.service';
 import { UserService } from '../../services/user.service';
 import { BsModalService, BsModalRef } from 'ngx-bootstrap/modal';
@@ -40,7 +41,6 @@ export class AssessmentComponent implements OnInit {
   partialCredit = false;
   pointsPossible = 0;
   preview = false; //if preview query param in URL, send to server, valid LTI session not needed
-  sessionStorageTokenKey = 'iu-eds-qc-student-token';
   score = 0;
   studentAnswer = null;
   timeoutSecondsRemaining = null; //seconds of timeout remaining, if feature enabled
@@ -48,6 +48,7 @@ export class AssessmentComponent implements OnInit {
   constructor(
     public utilitiesService: UtilitiesService,
     private assessmentService: AssessmentService,
+    private authService: AuthService,
     private caliperService: CaliperService,
     private modalService: BsModalService,
     private userService: UserService
@@ -56,7 +57,7 @@ export class AssessmentComponent implements OnInit {
     //subscribe to changes in feedback modal
     this.modalService.onHide.subscribe(() => { this.nextQuestion() });
 
-    this.apiToken = this.getApiTokenFromSessionStorage();
+    this.apiToken = this.authService.getStudentTokenFromStorage();
     this.assessmentService.setApiToken(this.apiToken);
   }
 
@@ -69,15 +70,6 @@ export class AssessmentComponent implements OnInit {
     let data;
 
     this.utilitiesService.loadingStarted();
-
-    const thirdPartyCookiesEnabled = await this.areCookiesEnabled();
-    if (!thirdPartyCookiesEnabled) {
-      const errorMessage = this.utilitiesService.getCookieErrorMsg();
-      const showRestartBtn = false; //student must refresh entire page to get new LTI launch
-      this.showErrorModal(errorMessage, showRestartBtn);
-      this.utilitiesService.loadingFinished();
-      return;
-    }
 
     try {
       const resp = await this.assessmentService.initAttempt(this.assessmentId, this.preview.toString(), this.attemptId, this.nonce);
@@ -95,32 +87,17 @@ export class AssessmentComponent implements OnInit {
     this.attemptId = data.attemptId;
     this.parseCaliperData(data);
     this.parseTimeoutData(data);
+
     //if API token present, this is our first attempt of the session and authentication was valid
-    if (data.apiToken) {
-      this.setApiToken(data.apiToken);
+    const apiToken = data.apiToken;
+    if (apiToken) {
+      this.authService.storeStudentToken(apiToken);
+      this.apiToken = apiToken;
+      this.assessmentService.setApiToken(this.apiToken);
     }
 
     this.utilitiesService.loadingFinished();
     await this.initQuestions();
-  }
-
-  async areCookiesEnabled() {
-    //in Safari, if third party cookies are disabled, the sameSite=none policy that works in Chrome
-    //unfortunately does not work on Safari 13 and earlier in Mojave and earlier versions of mac OS.
-    //in this case, we check to see if a session exists immediately after the LTI launch, and if not,
-    //we can assume cookies are disabled and require the user to open in a new tab to establish first
-    //party trust. should only be necessary the first time the user accesses the site.
-    try {
-      await this.userService.checkCookies();
-      return true;
-    }
-    catch (error) {
-      return false;
-    }
-  }
-
-  getApiTokenFromSessionStorage() {
-    return sessionStorage.getItem(this.sessionStorageTokenKey);
   }
 
   //get the assessment id from the Laravel url, /assessment/{id} and separate from query strings at the end, if necessary;
@@ -308,12 +285,6 @@ export class AssessmentComponent implements OnInit {
   restart() {
     //hard page refresh to ensure a new attempt is created
     window.location.reload();
-  }
-
-  setApiToken(apiToken) {
-    this.apiToken = apiToken;
-    sessionStorage.setItem(this.sessionStorageTokenKey, this.apiToken);
-    this.assessmentService.setApiToken(this.apiToken);
   }
 
   showErrorModal(errorMessage, showRestartBtn = true) {

@@ -7,9 +7,13 @@ use App\Models\User;
 
 class CASFilter
 {
-    private $permissionCode = "ANY";
-    //TODO: if this doesn't work with env, may have to create a constructor function
-    private $appUrl = env('APP_URL') . '/home';
+    private $permissionCode;
+    private $appUrl;
+
+    public function __construct() {
+        $this->permissionCode = "ANY";
+        $this->appUrl = env('APP_URL') . '/home';
+    }
 
     /************************************************************************/
     /* PUBLIC FUNCTIONS *****************************************************/
@@ -59,6 +63,11 @@ class CASFilter
 
     public function getUsernameFromCasTicket($casTicket)
     {
+        //for local development environment, return test user and don't go through CAS
+        if (App::environment('local')) {
+            return 'testinstructor';
+        }
+
         $casAnswer = $this->getCasAnswer();
         //split CAS answer into access and user
         list($access,$username) = explode("\n",$casAnswer,2);
@@ -114,20 +123,5 @@ class CASFilter
     {
         $redirectUrl = 'https://cas.iu.edu/cas/login?cassvc=' . $this->permissionCode . '&casurl=' . $this->appUrl;
         return $redirectUrl;
-    }
-
-    /**
-    * Local permissions are a bit different, since redirecting back to localhost creates a CAS error.
-    * Add a username that is NOT valid in CAS, but used locally and seeded in database. Set auth = true.
-    *
-    * @return void
-    */
-
-    private function setLocalAuth()
-    {
-        //locally, you can comment out either Session line below to test what an admin vs. instructor sees
-        Session::put('user', 'testinstructor');
-        //Session::put('user', 'testadmin');
-        $authenticated = true; //if on a local machine for development, skip all the CAS business
     }
 }

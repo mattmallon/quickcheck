@@ -16,9 +16,10 @@ class CustomActivityController extends \BaseController
     * @return Response
     */
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
-        if (!User::isAdmin()) {
+        $user = $request->user;
+        if (!$user->isAdmin()) {
             return response()->error(403);
         }
 
@@ -33,9 +34,10 @@ class CustomActivityController extends \BaseController
     * @return Response
     */
 
-    public function index()
+    public function index(Request $request)
     {
-        if (!User::isAdmin()) {
+        $user = $request->user;
+        if (!$user->isAdmin()) {
             return response()->error(403);
         }
 
@@ -51,7 +53,8 @@ class CustomActivityController extends \BaseController
 
     public function store(Request $request)
     {
-        if (!User::isAdmin()) {
+        $user = $request->user;
+        if (!$user->isAdmin()) {
             return response()->error(403);
         }
 
@@ -68,7 +71,8 @@ class CustomActivityController extends \BaseController
 
     public function update(Request $request, $id)
     {
-        if (!User::isAdmin()) {
+        $user = $request->user;
+        if (!$user->isAdmin()) {
             return response()->error(403);
         }
 

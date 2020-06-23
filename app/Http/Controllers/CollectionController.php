@@ -90,7 +90,7 @@ class CollectionController extends \BaseController
     public function destroy($id)
     {
         $collection = Collection::findOrFail($id);
-        if (!$collection->canUserWrite()) {
+        if (!$collection->canUserWrite($request->user)) {
             return response()->error(403);
         }
 
@@ -108,12 +108,12 @@ class CollectionController extends \BaseController
     public function getCollection($id)
     {
         $collection = Collection::findOrFail($id);
-        if (!$collection->canUserRead()) {
+        if (!$collection->canUserRead($request->user)) {
             return response()->error(403);
         }
 
         $readOnly = false;
-        if (!$collection->canUserWrite()) {
+        if (!$collection->canUserWrite($request->user)) {
             $readOnly = true;
         }
 
@@ -135,14 +135,14 @@ class CollectionController extends \BaseController
 
     public function getUserPermissions($id)
     {
-        $user = User::getCurrentUser();
+        $user = $request->user;
         $collection = Collection::findOrFail($id);
-        if (!$collection->canUserRead()) {
+        if (!$collection->canUserRead($user)) {
             return response()->error(403);
         }
 
         $readOnly = false;
-        if (!$collection->canUserWrite()) {
+        if (!$collection->canUserWrite($user)) {
             $readOnly = true;
         }
 
@@ -159,10 +159,10 @@ class CollectionController extends \BaseController
     * @return response (includes: collections)
     */
 
-    public function index($assessments = false)
+    public function index(Request $request, $assessments = false)
     {
         $collections = [];
-        $user = User::getCurrentUser();
+        $user = $request->user;
         if (!$user->isAdmin()) {
             return response()->error(403);
         }
@@ -186,7 +186,9 @@ class CollectionController extends \BaseController
     public function publicIndex(Request $request)
     {
         $publicCollections = Collection::where('public_collection', '=', 'true')
-            ->with('userMembership')
+            ->with(['userMembership' => function ($query, $request) {
+                $query->currentUser($request);
+            }])
             ->get();
         return response()->success(['publicCollections' => $publicCollections]);
     }
@@ -200,7 +202,8 @@ class CollectionController extends \BaseController
 
     public function publicToggle(Request $request, $collectionId)
     {
-        if (!User::isAdmin()) {
+        $user = $request->user;
+        if (!$user->isAdmin()) {
             return response()->error(403);
         }
 
@@ -239,11 +242,11 @@ class CollectionController extends \BaseController
 
         if ($newCollection) {
             $collection = new Collection();
-            $collection->storeCollection($assessment['collection']['name']);
+            $collection->storeCollection($assessment['collection']['name'], $request->user);
         }
         else {
             $collection = Collection::findOrFail($collectionId);
-            if (!$collection->canUserWrite()) {
+            if (!$collection->canUserWrite($request->user)) {
                 return response()->error(403);
             }
         }
@@ -283,7 +286,7 @@ class CollectionController extends \BaseController
         ])
         ->findOrFail($id);
 
-        if (!$collection->canUserRead()) {
+        if (!$collection->canUserRead($request->user)) {
             return response()->error(403);
         }
 
@@ -319,7 +322,7 @@ class CollectionController extends \BaseController
         }
 
         $collection = new Collection();
-        $collection->storeCollection($request->input('name'), $request->input('description'));
+        $collection->storeCollection($request->input('name'), $request->user, $request->input('description'));
 
         //return new membership with collection included
         $membership = $collection->memberships()->first();
@@ -344,7 +347,7 @@ class CollectionController extends \BaseController
         }
 
         $collection = Collection::findOrFail($id);
-        if (!$collection->canUserWrite()) {
+        if (!$collection->canUserWrite($request->user)) {
             return response()->error(403);
         }
 

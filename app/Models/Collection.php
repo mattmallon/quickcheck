@@ -26,8 +26,9 @@ class Collection extends Eloquent implements MembershipPermissionsInterface {
     }
 
     public function userMembership() {
-        //technically many memberships on the collection, but just one where it's potentially the current user
-        return $this->hasOne('App\Models\Membership')->currentUser();
+        //technically many memberships on the collection, but just one where it's potentially the current user,
+        //query is constrained in the caller, as request parameter cannot be passed into a relationship function
+        return $this->hasOne('App\Models\Membership');
     }
 
     /************************************************************************/
@@ -37,12 +38,13 @@ class Collection extends Eloquent implements MembershipPermissionsInterface {
     /**
     * Determine if currently logged in user has access to view collection
     *
+    * @param  User $user
     * @return boolean
     */
 
-    public function canUserRead() {
+    public function canUserRead($user) {
         $membership = new Membership();
-        if ($membership->canReadFromCollection($this)) {
+        if ($membership->canReadFromCollection($this, $user)) {
             return true;
         }
 
@@ -52,12 +54,13 @@ class Collection extends Eloquent implements MembershipPermissionsInterface {
     /**
     * Determine if currently logged in user has access to edit collection
     *
+    * @param  User $user
     * @return boolean
     */
 
-    public function canUserWrite() {
+    public function canUserWrite($user) {
         $membership = new Membership();
-        if ($membership->canWriteToCollection($this)) {
+        if ($membership->canWriteToCollection($this, $user)) {
             return true;
         }
 
@@ -82,12 +85,12 @@ class Collection extends Eloquent implements MembershipPermissionsInterface {
     * Save a collection
     *
     * @param  string  $name
+    * @param  User    $user
     * @param  string  $description
     * @return void
     */
 
-    public function storeCollection($name, $description = null) {
-        $user = User::getCurrentUser();
+    public function storeCollection($name, $user, $description = null) {
         $this->name = $name;
         $this->owner = $user->username;
         if ($description) { //optional

@@ -5,7 +5,6 @@ namespace App\Exceptions;
 use Exception;
 use Log;
 use Request;
-use Session;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -28,8 +27,6 @@ class Handler extends ExceptionHandler
         ValidationException::class,
         DeletedCollectionException::class,
         LtiLaunchDataMissingException::class,
-        SessionMissingAssessmentDataException::class,
-        SessionMissingStudentDataException::class,
         MissingLtiContextException::class,
         OAuthExpiredTimestampException::class,
         GradePassbackException::class
@@ -52,7 +49,12 @@ class Handler extends ExceptionHandler
         Log::info($info);
 
         //if sentry is being used, then send error info
-        if (app()->bound('sentry') && env('APP_ENV') === 'prod') {
+        if (app()->bound('sentry')) {
+            //don't report if not in prod environment
+            if (env('APP_ENV') !== 'prod') {
+                return false;
+            }
+
             //capture as either error or info depending on severity
             if (!$this->shouldReport($e)) {
                 app('sentry')->configureScope(function (Scope $scope) {
@@ -93,14 +95,6 @@ class Handler extends ExceptionHandler
                 $message .= $this->addErrorIdMessage($errorId); //add error ID for user
                 $newException = new LtiLaunchDataMissingException($message);
                 return $this->displayError($newException->getMessage());
-                break;
-            case ($e instanceof SessionMissingAssessmentDataException):
-                $message = $e->getMessage();
-                $this->logNotice($message, $errorId);
-                break;
-            case ($e instanceof SessionMissingStudentDataException):
-                $message = $e->getMessage();
-                $this->logNotice($message, $errorId);
                 break;
             case ($e instanceof MissingLtiContextException):
                 $message = $e->getMessage();
@@ -191,7 +185,6 @@ class Handler extends ExceptionHandler
     {
         $requestInfo = "\nUrl: " . Request::url();
         $requestInfo .= "\nInput: " . json_encode(Request::all());
-        $requestInfo .= "\nSession: " . json_encode(Session::all());
         $requestInfo .= "\nUser agent: " . Request::header('User-Agent') . "\n";
         return $requestInfo;
     }

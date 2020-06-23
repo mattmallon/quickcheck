@@ -1,17 +1,17 @@
 <div class="qc-home-page row">
     <div class="col-12">
         <qc-error-message *ngIf="this.utilitiesService.errorFound" [utilitiesService]="this.utilitiesService"></qc-error-message>
-        <div class="alert alert-warning text-center" *ngIf="this.sessionExpired">
-            <p class="lead"><span class="fa fa-exclamation" aria-hidden="true"></span>&nbsp;&nbsp;&nbsp;Your session has expired due to inactivity.</p>
-        </div>
-        <qc-nav [currentPage]="this.currentPage"></qc-nav>
-        <div class="row">
-            <div class="col-12 col-sm-7 qc-home-hero">
-                <button class="btn qc-hero-add-btn" (click)="this.addAssessment()" [hidden]="this.isAddingAssessment" type="button">Add Quick Check</button>
-                <qc-quick-add *ngIf="this.isAddingAssessment"
-                    (onCancel)="this.cancelAdd($event)"
-                    [utilitiesService]="this.utilitiesService">
-                </qc-quick-add>
+        <div *ngIf="this.apiToken">
+            <qc-nav [currentPage]="this.currentPage"></qc-nav>
+            <div class="row">
+                <div class="col-12 col-sm-7 qc-home-hero">
+                    <button class="btn qc-hero-add-btn" (click)="this.addAssessment()" [hidden]="this.isAddingAssessment" type="button">Add Quick Check</button>
+                    <qc-quick-add *ngIf="this.isAddingAssessment"
+                        (onCancel)="this.cancelAdd($event)"
+                        [utilitiesService]="this.utilitiesService"
+                        [apiToken]="this.apiToken">
+                    </qc-quick-add>
+                </div>
             </div>
         </div>
     </div>

@@ -217,9 +217,7 @@ class AttemptController extends \BaseController
             $eagerLoading = array_merge($eagerLoading, $responseTypes);
         }
 
-        //TODO: replace session with student in request
-        $studentUsername = Session::get('student');
-        $student = Student::where('lti_custom_canvas_user_login_id', '=', $studentUsername)->first();
+        $student = $request->student;
         $courseContext = CourseContext::where('lti_context_id', '=', $contextId)->first();
         $attempts = Attempt::with($eagerLoading)
             ->where('assessment_id', '=', $assessmentId)

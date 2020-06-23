@@ -27,13 +27,14 @@ class AssessmentGroup extends Eloquent implements MembershipPermissionsInterface
     /**
     * Determine if currently logged in user has access to view assessment group
     *
+    * @param  User $user
     * @return boolean
     */
 
-    public function canUserRead() {
+    public function canUserRead($user) {
         $collection = $this->collection;
         $membership = new Membership();
-        if ($membership->canReadFromCollection($collection)) {
+        if ($membership->canReadFromCollection($collection, $user)) {
             return true;
         }
 
@@ -43,13 +44,14 @@ class AssessmentGroup extends Eloquent implements MembershipPermissionsInterface
     /**
     * Determine if currently logged in user has access to edit assessment group
     *
+    * @param  User $user
     * @return boolean
     */
 
-    public function canUserWrite() {
+    public function canUserWrite($user) {
         $collection = $this->collection;
         $membership = new Membership();
-        if ($membership->canWriteToCollection($collection)) {
+        if ($membership->canWriteToCollection($collection, $user)) {
             return true;
         }
 

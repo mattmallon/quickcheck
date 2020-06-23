@@ -46,7 +46,7 @@ class ReleaseController extends \BaseController
         $assessmentId = $request->input('assessmentId');
         $ltiContextId = $request->input('ltiContextId');
         $assessment = Assessment::findOrFail($assessmentId);
-        if (!$assessment->canUserWrite()) {
+        if (!$assessment->canUserWrite($request->user)) {
             return response()->error(403);
         }
 
@@ -88,7 +88,7 @@ class ReleaseController extends \BaseController
     {
         $release = Release::findOrFail($releaseId);
         $assessment = Assessment::findOrFail($release->assessment_id);
-        if (!$assessment->canUserWrite()) {
+        if (!$assessment->canUserWrite($request->user)) {
             return response()->error(403);
         }
 

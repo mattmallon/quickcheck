@@ -21,7 +21,7 @@ class AssessmentGroupController extends \BaseController
     public function destroy($id)
     {
         $assessmentGroup = AssessmentGroup::with('assessments')->findOrFail($id);
-        if (!$assessmentGroup->canUserWrite()) {
+        if (!$assessmentGroup->canUserWrite($request->user)) {
             return response()->error(403);
         }
 
@@ -54,7 +54,7 @@ class AssessmentGroupController extends \BaseController
         //check to see if user has membership/permissions for this collection
         $collectionId = $request->collection_id;
         $collection = Collection::findOrFail($collectionId);
-        if (!$collection->canUserWrite()) {
+        if (!$collection->canUserWrite($request->user)) {
             return response()->error(403);
         }
 
@@ -82,7 +82,7 @@ class AssessmentGroupController extends \BaseController
         }
 
         $assessmentGroup = AssessmentGroup::findOrFail($id);
-        if (!$assessmentGroup->canUserWrite()) {
+        if (!$assessmentGroup->canUserWrite($request->user)) {
             return response()->error(403);
         }
 

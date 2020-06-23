@@ -5,6 +5,7 @@ use App\Models\Student;
 use App\Models\User;
 use App\Classes\LTI\LtiConfig;
 use App\Classes\Auth\CASFilter;
+use Illuminate\Support\Facades\Cache;
 
 class HomeController extends BaseController
 {
@@ -48,6 +49,9 @@ class HomeController extends BaseController
             if ($isInstructor) {
                 $username = $ltiContext->getUserLoginId();
                 $user = User::getUserFromUsername($username);
+                if (!$user) {
+                    abort(500, 'User not found when attempting instructor LTI login');
+                }
             }
             else {
                 $canvasUserId = $ltiContext->getUserId();
@@ -74,7 +78,7 @@ class HomeController extends BaseController
             $username = $casFilter->getUsernameFromCasTicket($casTicket);
             $user = User::getUserFromUsername($username);
             if (!$user) {
-                return redirect('usernotfound');
+                abort(500, 'User not found when attempting instructor CAS login');
             }
 
             $isInstructor = true; //we only get here if user already present in users table from previous instructor LTI launch

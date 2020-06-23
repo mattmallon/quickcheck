@@ -165,7 +165,7 @@ class AssessmentController extends \BaseController
     public function destroy($id)
     {
         $assessment = Assessment::findOrFail($id);
-        if (!$assessment->canUserWrite()) {
+        if (!$assessment->canUserWrite($request->user)) {
             return response()->error(403);
         }
 
@@ -193,7 +193,7 @@ class AssessmentController extends \BaseController
             $customActivity = $customActivity->toArray();
         }
 
-        if (!$assessment->canUserRead()) {
+        if (!$assessment->canUserRead($request->user)) {
             return response()->error(403);
         }
         return response()->success([
@@ -281,7 +281,7 @@ class AssessmentController extends \BaseController
         }
 
         $assessmentGroup = AssessmentGroup::findOrFail($request->assessment_group_id);
-        if (!$assessmentGroup->canUserWrite()) {
+        if (!$assessmentGroup->canUserWrite($request->user)) {
             return response()->error(403);
         }
 
@@ -302,7 +302,7 @@ class AssessmentController extends \BaseController
     public function update(Request $request, $id)
     {
         $assessment = Assessment::findOrFail($id);
-        if (!$assessment->canUserWrite()) {
+        if (!$assessment->canUserWrite($request->user)) {
             return response()->error(403);
         }
 

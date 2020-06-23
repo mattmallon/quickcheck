@@ -7,7 +7,7 @@ use Illuminate\Contracts\Auth\Guard;
 use App\Classes\Auth\CASFilter;
 use App\Classes\Auth\AltCASFilter;
 use App\Classes\Auth\LTIFilter;
-use Session;
+use App\Models\User;
 
 class Authenticate {
     public function handle($request, Closure $next)
@@ -20,11 +20,10 @@ class Authenticate {
         //give priority to LTI authentication
         if ($request->input('id_token')) { //LTI 1.3 launch with JWT token
             $ltiFilter = new LTIFilter($request);
-            $redirectUrl = $ltiFilter->dataEntryFilter();
+            $redirectUrl = $ltiFilter->manageFilter();
         }
         //authenticated instructor passing API token in request
         else if ($apiToken) {
-            //TODO: can this accept an object or does it have to be an array/basic value?
             $user = User::findByApiToken($apiToken);
             $request->merge(['user' => $user]);
         }

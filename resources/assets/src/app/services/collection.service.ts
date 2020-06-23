@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { timeout } from 'rxjs/operators';
 import { HttpService } from './http.service';
 
@@ -7,6 +7,8 @@ import { HttpService } from './http.service';
   providedIn: 'root'
 })
 export class CollectionService {
+
+  apiToken = null;
 
   constructor(private httpClient: HttpClient, private httpService: HttpService) {}
 
@@ -130,8 +132,11 @@ export class CollectionService {
   async getMembershipsWithAssessments() {
     const timeoutLength = this.httpService.getLongTimeout();
     const path = this.httpService.getApiRoute() + '/memberships/assessments';
+    const httpOptions = {
+      headers: new HttpHeaders({ Authorization: `Bearer ${this.apiToken}`})
+    };
 
-    return await this.httpClient.get(path)
+    return await this.httpClient.get(path, httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -175,6 +180,10 @@ export class CollectionService {
     return await this.httpClient.post(path, { searchTerm })
       .pipe(timeout(timeoutLength))
       .toPromise();
+  }
+
+  setApiToken(apiToken) {
+    this.apiToken = apiToken;
   }
 
   async togglePublic(collection) {

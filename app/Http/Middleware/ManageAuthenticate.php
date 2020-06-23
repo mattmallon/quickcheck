@@ -27,10 +27,10 @@ class ManageAuthenticate {
         //not an LTI launch and no API token -- either an intruder, or more likely, the session simply expired
         else {
             if ($request->is('api/*')) { //if an API request, send JSON error message
-                $redirectUrl = 'api/sessionnotvalid';
+                return response()->error(403, ['User not authenticated.']);
             }
             else { //if a page view, redirect to error page
-                $redirectUrl = 'sessionnotvalid';
+                $redirectUrl = 'error';
             }
         }
 

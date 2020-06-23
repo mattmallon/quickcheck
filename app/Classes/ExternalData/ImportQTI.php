@@ -9,7 +9,6 @@ use DOMDocument;
 use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
 use App\Models\Assessment;
-use App\Models\User;
 
 class ImportQTI {
     //list of warnings issued to user when import/export is not 100% perfect
@@ -55,11 +54,6 @@ class ImportQTI {
         'IMS-CC-FILEBASE'
     ];
 
-    public function __construct()
-    {
-        $this->username = User::getCurrentUsername();
-    }
-
     /************************************************************************/
     /* PUBLIC FUNCTIONS *****************************************************/
     /************************************************************************/
@@ -68,13 +62,15 @@ class ImportQTI {
     * Master function to import a QTI zip package
     * Will return a response containing potential warnings and imported quizzes.
     *
-    * @param  []  $input
-    * @param  File  $zipFile
-    * @return [] $response
+    * @param  Request  $request
+    * @param  File     $zipFile
+    * @return []       $response
     */
 
-    public function import($input, $zipFile)
+    public function import($request, $zipFile)
     {
+        $input = $request->all();
+        $this->username = $request->user->username;
         $assessmentGroupId = $input['assessment_group_id'];
         $this->unzipImport($zipFile);
         $allDirectories = Storage::directories($this->unzippedLocation);

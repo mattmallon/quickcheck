@@ -8,6 +8,8 @@ import { HttpService } from './http.service';
 })
 export class AssessmentEditService {
 
+  apiToken = null;
+
   constructor(private httpClient: HttpClient, private httpService: HttpService) { }
 
   async deleteAssessment(id) {
@@ -35,6 +37,10 @@ export class AssessmentEditService {
     return await this.httpClient.post(path, data)
       .pipe(timeout(timeoutLength))
       .toPromise();
+  }
+
+  setApiToken(apiToken) {
+    this.apiToken = apiToken;
   }
 
   async updateAssessment(id, data) {

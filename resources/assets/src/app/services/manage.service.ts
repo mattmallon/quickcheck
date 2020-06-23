@@ -8,6 +8,8 @@ import { HttpService } from './http.service';
 })
 export class ManageService {
 
+  apiToken = null;
+
   constructor(private httpClient: HttpClient, private httpService: HttpService) { }
 
   async autoGrade(data) {
@@ -153,6 +155,10 @@ export class ManageService {
     return await this.httpClient.delete(path)
       .pipe(timeout(timeoutLength))
       .toPromise();
+  }
+
+  setApiToken(apiToken) {
+    this.apiToken = apiToken;
   }
 
   async submitGrade(data) {

@@ -18,8 +18,8 @@ class Membership extends Eloquent {
         return $this->belongsTo('App\Models\Collection');
     }
 
-    public function scopeCurrentUser($query) {
-        $user = User::getCurrentUser();
+    public function scopeCurrentUser($query, $request) {
+        $user = $request->user;
         return $query->where('user_id', '=', $user->id);
     }
 
@@ -47,11 +47,11 @@ class Membership extends Eloquent {
     * Determine if user has appropriate permissions to view a collection
     *
     * @param  Collection  $collection
+    * @param  User        $user
     * @return boolean
     */
 
-    public function canReadFromCollection(Collection $collection) {
-        $user = User::getCurrentUser();
+    public function canReadFromCollection(Collection $collection, User $user) {
         if ($user->isAdmin()) {
             return true;
         }
@@ -68,11 +68,11 @@ class Membership extends Eloquent {
     * Determine if user has appropriate permissions to modify a collection
     *
     * @param  Collection  $collection
+    * @param  User        $user
     * @return boolean
     */
 
-    public function canWriteToCollection(Collection $collection) {
-        $user = User::getCurrentUser();
+    public function canWriteToCollection(Collection $collection, User $user) {
         if ($user->isAdmin()) {
             return true;
         }

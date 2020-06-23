@@ -50,8 +50,6 @@ Route::get('select', 'CollectionController@viewSelectLink');
 
 //errors
 Route::get('usernotfound', 'UserController@userNotFound');
-Route::get('sessionnotvalid', 'UserController@sessionNotValid');
-Route::get('ltisessionnotvalid', 'UserController@ltiSessionNotValid');
 Route::get('error', function() {
     return displaySPA();
 });
@@ -85,15 +83,12 @@ Route::group(['prefix' => 'api'], function() {
     //Grade passback (requires existing attempt in the database)
     Route::post('grade/passback', 'GradeController@passback');
 
-    //API error for instructors with an expired session
-    Route::get('sessionnotvalid', 'UserController@apiSessionNotValid');
-
     //Third party cookie check
     Route::get('checkcookies', 'UserController@checkCookies');
     Route::get('establishcookietrust', 'UserController@establishCookieTrust');
 
     //Authenticate to obtain an API token
-    Route::post('token', 'UserController@getToken');
+    Route::post('authenticate', 'UserController@getToken');
 });
 
 /********************************************************************/
@@ -102,6 +97,7 @@ Route::group(['prefix' => 'api'], function() {
 
 Route::group(['middleware' => ['manageAuth']], function() {
     Route::post('home', 'HomeController@home'); //LTI manage launch URL: middleware required to validate LTI launch
+    Route::post('select', 'CollectionController@selectLink'); //select QC to embed : middleware required to validate LTI launch
 
     //student api endpoints
     Route::group(array('prefix' => 'api'), function() {
@@ -115,8 +111,6 @@ Route::group(['middleware' => ['manageAuth']], function() {
 /********************************************************************/
 
 Route::group(array('middleware' => array('auth')), function() {
-    Route::post('select', 'CollectionController@selectLink'); //select QC to embed : middleware required to validate LTI launch
-
     //TODO: need to figure out an auth mechanism for this, perhaps exchange API token for temp cached auth token in query param;
     //Or a form POST in new tab, include API token in a request field instead of header.
     //CSV downloads
