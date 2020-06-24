@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { timeout } from 'rxjs/operators';
 import { HttpService } from './http.service';
 
@@ -9,6 +9,7 @@ import { HttpService } from './http.service';
 export class ManageService {
 
   apiToken = null;
+  httpOptions = null;
 
   constructor(private httpClient: HttpClient, private httpService: HttpService) { }
 
@@ -16,7 +17,7 @@ export class ManageService {
     const timeoutLength = this.httpService.getDefaultTimeout();
     const path = this.httpService.getApiRoute() + '/attempts/autograde';
 
-    return await this.httpClient.post(path, data)
+    return await this.httpClient.post(path, data, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -25,7 +26,7 @@ export class ManageService {
     const timeoutLength = this.httpService.getDefaultTimeout();
     const path = this.httpService.getApiRoute() + '/release';
 
-    return await this.httpClient.post(path, data)
+    return await this.httpClient.post(path, data, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -37,7 +38,7 @@ export class ManageService {
       path += ('/' + assignmentId);
     }
 
-    return await this.httpClient.get(path)
+    return await this.httpClient.get(path, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -46,7 +47,7 @@ export class ManageService {
     const timeoutLength = this.httpService.getLongTimeout();
     const path = this.httpService.getApiRoute() + '/attempts/' + contextId + '/student/'  + studentId;
 
-    return await this.httpClient.get(path)
+    return await this.httpClient.get(path, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -58,7 +59,7 @@ export class ManageService {
       path += ('/' + assignmentId);
     }
 
-    return await this.httpClient.get(path)
+    return await this.httpClient.get(path, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -67,7 +68,7 @@ export class ManageService {
     const timeoutLength = this.httpService.getLongTimeout();
     const path = this.httpService.getApiRoute() + '/attempts/' + contextId;
 
-    return await this.httpClient.get(path)
+    return await this.httpClient.get(path, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -76,7 +77,7 @@ export class ManageService {
     const timeoutLength = this.httpService.getDefaultTimeout();
     const path = this.httpService.getApiRoute() + '/release/' + contextId;
 
-    return await this.httpClient.get(path)
+    return await this.httpClient.get(path, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -89,7 +90,7 @@ export class ManageService {
       path += ('/' + assignmentId);
     }
 
-    return await this.httpClient.get(path)
+    return await this.httpClient.get(path, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -98,7 +99,7 @@ export class ManageService {
     const timeoutLength = this.httpService.getLongTimeout();
     const path = this.httpService.getApiRoute() + '/students/context/' + contextId;
 
-    return await this.httpClient.get(path)
+    return await this.httpClient.get(path, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -107,7 +108,7 @@ export class ManageService {
     const timeoutLength = this.httpService.getLongTimeout();
     const path = this.httpService.getApiRoute() + '/analytics/context/' + contextId + '/student/' + studentId;
 
-    return await this.httpClient.get(path)
+    return await this.httpClient.get(path, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -116,7 +117,7 @@ export class ManageService {
     const timeoutLength = this.httpService.getMediumTimeout();
     const path = this.httpService.getApiRoute() + '/assessment/' + assessmentId + '/attempt/' + contextId;
 
-    return await this.httpClient.get(path)
+    return await this.httpClient.get(path, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -125,7 +126,7 @@ export class ManageService {
     const timeoutLength = this.httpService.getDefaultTimeout();
     const path = this.httpService.getApiRoute() + '/attempt/' + id + '/responses';
 
-    return await this.httpClient.get(path)
+    return await this.httpClient.get(path, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -134,7 +135,7 @@ export class ManageService {
     const timeoutLength = this.httpService.getLongTimeout();
     const path = this.httpService.getApiRoute() + '/assessment/' + assessmentId + '/attempts/'  + contextId + '/submission/' + studentId;
 
-    return await this.httpClient.get(path)
+    return await this.httpClient.get(path, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -143,7 +144,7 @@ export class ManageService {
     const timeoutLength = this.httpService.getLongTimeout();
     const path = this.httpService.getApiRoute() + '/users/course/' + id;
 
-    return await this.httpClient.get(path)
+    return await this.httpClient.get(path, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -152,20 +153,23 @@ export class ManageService {
     const timeoutLength = this.httpService.getDefaultTimeout();
     const path = this.httpService.getApiRoute() + '/release/' + id;
 
-    return await this.httpClient.delete(path)
+    return await this.httpClient.delete(path, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
 
   setApiToken(apiToken) {
     this.apiToken = apiToken;
+    this.httpOptions = {
+      headers: new HttpHeaders({ Authorization: `Bearer ${this.apiToken}`})
+    };
   }
 
   async submitGrade(data) {
     const timeoutLength = this.httpService.getDefaultTimeout();
     const path = this.httpService.getApiRoute() + '/attempts/gradepassback';
 
-    return await this.httpClient.post(path, data)
+    return await this.httpClient.post(path, data, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }

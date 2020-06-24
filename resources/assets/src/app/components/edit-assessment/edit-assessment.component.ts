@@ -4,6 +4,7 @@ import { UserService } from '../../services/user.service';
 import { UtilitiesService } from '../../services/utilities.service';
 import * as cloneDeep from 'lodash/cloneDeep';
 import { CanDeactivateGuard } from '../../guards/can-deactivate-guard.service';
+import { AuthService } from '../../services/auth.service';
 
 interface ComponentCanDeactivate {
   canDeactivate: () => boolean;
@@ -16,6 +17,7 @@ interface ComponentCanDeactivate {
 })
 export class EditAssessmentComponent implements OnInit, CanDeactivateGuard {
   admin = false;
+  apiToken = null;
   assessment = null;
   assessmentGroups = null;
   assessmentId = null;
@@ -33,10 +35,15 @@ export class EditAssessmentComponent implements OnInit, CanDeactivateGuard {
 
   constructor(
     public utilitiesService: UtilitiesService,
+    public authService: AuthService,
     private userService: UserService,
     private assessmentEditService: AssessmentEditService
   )
   {
+    this.apiToken = this.authService.getInstructorTokenFromStorage();
+    this.userService.setApiToken(this.apiToken);
+    this.assessmentEditService.setApiToken(this.apiToken);
+
     //Ask user if they really want to leave the page if unsaved changes
     window.addEventListener("beforeunload", (event) => {
       if (this.saved || this.readOnly) {

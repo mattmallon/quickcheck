@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { UtilitiesService } from '../../services/utilities.service';
 import { ManageService } from '../../services/manage.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'qc-student-view',
@@ -8,6 +9,7 @@ import { ManageService } from '../../services/manage.service';
   styleUrls: ['./student-view.component.scss']
 })
 export class StudentViewComponent implements OnInit {
+  apiToken = null;
   attemptAssessment = null;
   courseContext = null;
   displayedAttempts = [];
@@ -17,10 +19,25 @@ export class StudentViewComponent implements OnInit {
   showResponses = false; //set by feature toggling on collection, by instructor preference
   view = 'releases';
 
-  constructor(public utilitiesService: UtilitiesService, private manageService: ManageService) { }
+  constructor(public utilitiesService: UtilitiesService, public authService: AuthService, private manageService: ManageService) { }
 
-  ngOnInit() {
+  async ngOnInit() {
     this.utilitiesService.setTitle('Quick Check - View Your Results');
+
+    let data;
+
+    try {
+      const resp = await this.authService.authenticate();
+      data = this.utilitiesService.getResponseData(resp);
+    }
+    catch (error) {
+      this.utilitiesService.showError(error);
+    }
+
+    if (data) {
+      this.apiToken = data.apiToken;
+      this.authService.storeStudentToken(this.apiToken);
+    }
   }
 
   //when going back from attempts view

@@ -3,6 +3,7 @@ import { UtilitiesService } from '../../services/utilities.service';
 import { ManageService } from '../../services/manage.service';
 import { Submission } from '../../classes/submission';
 import { ActivatedRoute } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'qc-view-attempts',
@@ -10,8 +11,8 @@ import { ActivatedRoute } from '@angular/router';
   styleUrls: ['./view-attempts.component.scss']
 })
 export class ViewAttemptsComponent implements OnInit {
-
   analyticsViewVisible = false;
+  apiToken = null;
   assessment = null;
   assessmentId = '';
   assignmentId = '';
@@ -37,7 +38,15 @@ export class ViewAttemptsComponent implements OnInit {
   ungradedAttempts = [];
   users = [];
 
-  constructor(public utilitiesService: UtilitiesService, private manageService: ManageService, private route: ActivatedRoute) { }
+  constructor(
+    public utilitiesService: UtilitiesService,
+    public authService: AuthService,
+    private manageService: ManageService,
+    private route: ActivatedRoute)
+  {
+    this.apiToken = this.authService.getInstructorTokenFromStorage();
+    this.manageService.setApiToken(this.apiToken);
+  }
 
   async ngOnInit() {
     let data;

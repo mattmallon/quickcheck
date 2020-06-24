@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CollectionService } from '../../services/collection.service';
 import { UserService } from '../../services/user.service';
 import { UtilitiesService } from '../../services/utilities.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'qc-select',
@@ -9,7 +10,7 @@ import { UtilitiesService } from '../../services/utilities.service';
   styleUrls: ['./select.component.scss']
 })
 export class SelectComponent implements OnInit {
-
+  apiToken = null;
   user;
   admin = false;
   memberships = [];
@@ -28,14 +29,40 @@ export class SelectComponent implements OnInit {
 
   constructor(
   public utilitiesService: UtilitiesService,
+  public authService: AuthService,
   private userService: UserService,
   private collectionService: CollectionService
-  ) { }
+  ) {
+    this.apiToken = this.authService.getInstructorTokenFromStorage();
+    this.userService.setApiToken(this.apiToken);
+    this.collectionService.setApiToken(this.apiToken);
+  }
 
   async ngOnInit() {
     this.utilitiesService.setTitle('Quick Check - Select');
     this.launchUrlStem = this.utilitiesService.getQueryParam('launchUrlStem');
     this.redirectUrl = this.utilitiesService.getQueryParam('redirectUrl');
+
+    //if this is the user's first LTI launch recently, authenticate to retrieve API token
+    if (!this.apiToken) {
+      let data;
+
+      try {
+        const resp = await this.authService.authenticate();
+        data = this.utilitiesService.getResponseData(resp);
+      }
+      catch (error) {
+        this.utilitiesService.showError(error);
+      }
+
+      if (data) {
+        this.apiToken = data.apiToken;
+        this.authService.storeInstructorToken(this.apiToken);
+        this.userService.setApiToken(this.apiToken);
+        this.collectionService.setApiToken(this.apiToken);
+      }
+    }
+
     await this.getMemberships();
   }
 

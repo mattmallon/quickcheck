@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { UtilitiesService } from '../../services/utilities.service';
 import { ManageService } from '../../services/manage.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'qc-attempts-overview',
@@ -8,6 +9,7 @@ import { ManageService } from '../../services/manage.service';
   styleUrls: ['./attempts-overview.component.scss']
 })
 export class AttemptsOverviewComponent implements OnInit {
+  apiToken = null;
   attempts = [];
   currentPage = 'results';
   embeds = {}; //if same assessment is embedded in multiple assignments, split into separate entries
@@ -19,10 +21,15 @@ export class AttemptsOverviewComponent implements OnInit {
   };
   students = [];
 
-  constructor(public utilitiesService: UtilitiesService, private manageService: ManageService) { }
+  constructor(public utilitiesService: UtilitiesService, private manageService: ManageService, public authService: AuthService)
+  {
+    this.apiToken = this.authService.getInstructorTokenFromStorage();
+    this.manageService.setApiToken(this.apiToken);
+  }
 
   ngOnInit() {
     this.utilitiesService.setTitle('Quick Check results');
+
     if (this.isResultsByStudentToggleEnabled()) {
       this.isResultsByStudentToggled = true;
       this.getStudents();

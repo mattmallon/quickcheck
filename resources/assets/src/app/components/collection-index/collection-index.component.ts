@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CollectionService } from '../../services/collection.service';
 import { UserService } from '../../services/user.service';
 import { UtilitiesService } from '../../services/utilities.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'qc-collection-index',
@@ -14,6 +15,7 @@ export class CollectionIndexComponent implements OnInit {
     'viewAll': false,
     'collections': []
   };
+  apiToken = null;
   currentPage = 'sets';
   searchedMemberships = [];
   memberships = [];
@@ -24,8 +26,13 @@ export class CollectionIndexComponent implements OnInit {
   constructor(
     public utilitiesService: UtilitiesService,
     private userService: UserService,
-    private collectionService: CollectionService
-  ) { }
+    private collectionService: CollectionService,
+    public authService: AuthService
+  ) {
+    this.apiToken = this.authService.getInstructorTokenFromStorage();
+    this.userService.setApiToken(this.apiToken);
+    this.collectionService.setApiToken(this.apiToken);
+  }
 
   async ngOnInit() {
     this.utilitiesService.setTitle('Quick Check sets');

@@ -48,13 +48,8 @@ class Handler extends ExceptionHandler
         $info .= $this->getErrorRequest();
         Log::info($info);
 
-        //if sentry is being used, then send error info
-        if (app()->bound('sentry')) {
-            //don't report if not in prod environment
-            if (env('APP_ENV') !== 'prod') {
-                return false;
-            }
-
+        //if sentry is being used and in prod environment, then send error info
+        if (app()->bound('sentry') && env('APP_ENV') === 'prod') {
             //capture as either error or info depending on severity
             if (!$this->shouldReport($e)) {
                 app('sentry')->configureScope(function (Scope $scope) {

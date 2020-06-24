@@ -1,6 +1,7 @@
 <qc-nav [currentPage]="this.currentPage"></qc-nav>
 <qc-loading [hidden]="!this.utilitiesService.loading"></qc-loading>
-<div class="row section-white qc-results-page">
+<qc-error-message *ngIf="this.utilitiesService.errorFound" [utilitiesService]="this.utilitiesService"></qc-error-message>
+<div class="row section-white qc-results-page" *ngIf="this.apiToken">
     <div class="col-12">
         <div class="row">
             <div class="col-6">
@@ -13,7 +14,6 @@
 
             </div>
         </div>
-        <qc-error-message *ngIf="this.utilitiesService.errorFound" [utilitiesService]="this.utilitiesService"></qc-error-message>
         <div *ngIf="!this.isViewingByStudent()">
             <h2>Quick checks</h2>
             <p class="lead">Quick checks will only appear in the list below if at least one attempt has been made. Click on a quick check to see student results.</p>

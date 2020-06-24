@@ -29,7 +29,10 @@ export class HomeComponent implements OnInit {
       this.utilitiesService.showError(error);
     }
 
-    this.apiToken = data.apiToken;
+    if (data) {
+      this.apiToken = data.apiToken;
+      this.authService.storeInstructorToken(this.apiToken);
+    }
 
     this.utilitiesService.setLtiHeight();
   }

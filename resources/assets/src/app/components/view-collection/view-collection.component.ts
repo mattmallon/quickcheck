@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CollectionService } from '../../services/collection.service';
 import { UserService } from '../../services/user.service';
 import { UtilitiesService } from '../../services/utilities.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'qc-view-collection',
@@ -9,7 +10,7 @@ import { UtilitiesService } from '../../services/utilities.service';
   styleUrls: ['./view-collection.component.scss']
 })
 export class ViewCollectionComponent implements OnInit {
-
+  apiToken = null;
   collectionId;
   collection = null;
   currentPage = 'sets';
@@ -25,9 +26,14 @@ export class ViewCollectionComponent implements OnInit {
 
   constructor(
     public utilitiesService: UtilitiesService,
+    public authService: AuthService,
     private userService: UserService,
     private collectionService: CollectionService
-  ) { }
+  ) {
+    this.apiToken = this.authService.getInstructorTokenFromStorage();
+    this.userService.setApiToken(this.apiToken);
+    this.collectionService.setApiToken(this.apiToken);
+  }
 
   async ngOnInit() {
     this.collectionId = this.getCollectionIdFromUrl();

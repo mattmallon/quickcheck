@@ -9,6 +9,7 @@ import { HttpService } from './http.service';
 export class CollectionService {
 
   apiToken = null;
+  httpOptions = null;
 
   constructor(private httpClient: HttpClient, private httpService: HttpService) {}
 
@@ -16,7 +17,7 @@ export class CollectionService {
     const timeoutLength = this.httpService.getMediumTimeout();
     const path = this.httpService.getApiRoute() + '/assessment/' + id + '/copy';
 
-    return await this.httpClient.post(path, copyData)
+    return await this.httpClient.post(path, copyData, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -25,7 +26,7 @@ export class CollectionService {
     const timeoutLength = this.httpService.getDefaultTimeout();
     const path = this.httpService.getApiRoute() + '/assessmentgroup';
 
-    return await this.httpClient.post(path, data)
+    return await this.httpClient.post(path, data, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -34,7 +35,7 @@ export class CollectionService {
     const timeoutLength = this.httpService.getDefaultTimeout();
     const path = this.httpService.getApiRoute() + '/collection';
 
-    return await this.httpClient.post(path, data)
+    return await this.httpClient.post(path, data, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -43,7 +44,7 @@ export class CollectionService {
     const timeoutLength = this.httpService.getMediumTimeout();
     const path = this.httpService.getApiRoute() + '/createImportedQuizzes';
 
-    return await this.httpClient.post(path, data)
+    return await this.httpClient.post(path, data, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -52,7 +53,7 @@ export class CollectionService {
     const timeoutLength = this.httpService.getDefaultTimeout();
     const path = this.httpService.getApiRoute() + '/membership';
 
-    return await this.httpClient.post(path, data)
+    return await this.httpClient.post(path, data, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -61,7 +62,7 @@ export class CollectionService {
     const timeoutLength = this.httpService.getDefaultTimeout();
     const path = this.httpService.getApiRoute() + '/assessmentgroups/' + id;
 
-    return await this.httpClient.delete(path)
+    return await this.httpClient.delete(path, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -70,7 +71,7 @@ export class CollectionService {
     const timeoutLength = this.httpService.getDefaultTimeout();
     const path = this.httpService.getApiRoute() + '/collection/' + id;
 
-    return await this.httpClient.delete(path)
+    return await this.httpClient.delete(path, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -79,7 +80,7 @@ export class CollectionService {
     const timeoutLength = this.httpService.getMediumTimeout();
     const path = this.httpService.getApiRoute() + '/collection/' + id;
 
-    return await this.httpClient.get(path)
+    return await this.httpClient.get(path, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -88,7 +89,7 @@ export class CollectionService {
     const timeoutLength = this.httpService.getDefaultTimeout();
     const path = this.httpService.getApiRoute() + '/collections';
 
-    return await this.httpClient.get(path)
+    return await this.httpClient.get(path, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -97,7 +98,7 @@ export class CollectionService {
     const timeoutLength = this.httpService.getLongTimeout();
     const path = this.httpService.getApiRoute() + '/collections/assessments';
 
-    return await this.httpClient.get(path)
+    return await this.httpClient.get(path, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -106,7 +107,7 @@ export class CollectionService {
     const timeoutLength = this.httpService.getDefaultTimeout();
     const path = this.httpService.getApiRoute() + '/features/collection/' + id;
 
-    return await this.httpClient.get(path)
+    return await this.httpClient.get(path, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -115,7 +116,7 @@ export class CollectionService {
     const timeoutLength = this.httpService.getDefaultTimeout();
     const path = this.httpService.getApiRoute() + '/membership/collection/' + id;
 
-    return await this.httpClient.get(path)
+    return await this.httpClient.get(path, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -124,7 +125,7 @@ export class CollectionService {
     const timeoutLength = this.httpService.getLongTimeout();
     const path = this.httpService.getApiRoute() + '/memberships';
 
-    return await this.httpClient.get(path)
+    return await this.httpClient.get(path, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -132,11 +133,8 @@ export class CollectionService {
   async getMembershipsWithAssessments() {
     const timeoutLength = this.httpService.getLongTimeout();
     const path = this.httpService.getApiRoute() + '/memberships/assessments';
-    const httpOptions = {
-      headers: new HttpHeaders({ Authorization: `Bearer ${this.apiToken}`})
-    };
 
-    return await this.httpClient.get(path, httpOptions)
+    return await this.httpClient.get(path, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -145,7 +143,7 @@ export class CollectionService {
     const timeoutLength = this.httpService.getDefaultTimeout();
     const path = this.httpService.getApiRoute() + '/publiccollections';
 
-    return await this.httpClient.get(path)
+    return await this.httpClient.get(path, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -158,7 +156,7 @@ export class CollectionService {
     data.append('importFile', file, file.name);
     data.append('assessment_group_id', assessmentGroupId);
 
-    return await this.httpClient.post(path, data)
+    return await this.httpClient.post(path, data, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -168,7 +166,7 @@ export class CollectionService {
     const path = this.httpService.getApiRoute() + '/quickadd';
     const options = this.httpService.getFormHttpOptions();
 
-    return await this.httpClient.post(path, assessment)
+    return await this.httpClient.post(path, assessment, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -177,20 +175,23 @@ export class CollectionService {
     const timeoutLength = this.httpService.getLongTimeout();
     const path = this.httpService.getApiRoute() + '/collection/' + id + '/search';
 
-    return await this.httpClient.post(path, { searchTerm })
+    return await this.httpClient.post(path, { searchTerm }, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
 
   setApiToken(apiToken) {
     this.apiToken = apiToken;
+    this.httpOptions = {
+      headers: new HttpHeaders({ Authorization: `Bearer ${this.apiToken}`})
+    };
   }
 
   async togglePublic(collection) {
     const timeoutLength = this.httpService.getDefaultTimeout();
     const path = this.httpService.getApiRoute() + '/publiccollection/' + collection.id;
 
-    return await this.httpClient.put(path, collection)
+    return await this.httpClient.put(path, collection, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -199,7 +200,7 @@ export class CollectionService {
     const timeoutLength = this.httpService.getDefaultTimeout();
     const path = this.httpService.getApiRoute() + '/assessmentgroups/' + id;
 
-    return await this.httpClient.put(path,  data)
+    return await this.httpClient.put(path,  data, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -207,9 +208,8 @@ export class CollectionService {
   async updateCollection(id, data) {
     const timeoutLength = this.httpService.getDefaultTimeout();
     const path = this.httpService.getApiRoute() + '/collection/' + id;
-    const options = this.httpService.getFormHttpOptions();
 
-    return await this.httpClient.put(path, data)
+    return await this.httpClient.put(path, data, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -218,7 +218,7 @@ export class CollectionService {
     const timeoutLength = this.httpService.getDefaultTimeout();
     const path = this.httpService.getApiRoute() + '/membership/collection/' + id;
 
-    return await this.httpClient.put(path, data)
+    return await this.httpClient.put(path, data, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }
@@ -227,7 +227,7 @@ export class CollectionService {
     const timeoutLength = this.httpService.getDefaultTimeout();
     const path = this.httpService.getApiRoute() + '/feature/' + id;
 
-    return await this.httpClient.put(path, data)
+    return await this.httpClient.put(path, data, this.httpOptions)
       .pipe(timeout(timeoutLength))
       .toPromise();
   }

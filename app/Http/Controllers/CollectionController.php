@@ -1,5 +1,7 @@
 <?php
 use Illuminate\Http\Request;
+use App\Classes\Auth\AuthFilter;
+use App\Classes\LTI\LtiContext;
 use App\Models\Collection;
 use App\Models\User;
 use App\Models\AssessmentGroup;
@@ -28,21 +30,34 @@ class CollectionController extends \BaseController
     /**
     * In Canvas, select an external tool link for LTI
     *
-    * @return View, which will redirect to the success URL specified by Canvas
+    * @return redirect
     */
 
     public function selectLink(Request $request)
     {
-        //check POST variable first for the success return URL
-        $redirectUrl = urlencode($request->input('content_item_return_url'));
+        $authFilter = new AuthFilter($request);
 
-        //redirect with input vars added as query params to make them available to the front-end
-        if ($redirectUrl) {
-            $launchUrlStem = urlencode(env('APP_URL') . '/index.php/assessment?id=');
-            return redirect('/select?redirectUrl=' . $redirectUrl . '&launchUrlStem=' . $launchUrlStem);
+        if (!$authFilter->isLtiLaunch()) {
+            abort(403, 'A valid LTI context is required to access this resource.');
         }
 
-        abort(500, 'A valid LTI context is required to access this resource.');
+        //if we have a valid LTI launch, cache the nonce, role, and user ID, and redirect for auth
+        //to obtain an API token. Then remove that item from the cache so it can only be used once per launch.
+        $redirectUrl = $authFilter->buildRedirectUrl('select'); //TODO: slash here for abs path? had that before
+
+        $ltiContext = new LtiContext;
+        $ltiContext->setLaunchValues($request->ltiLaunchValues);
+        $canvasRedirectUrl = urlencode($ltiContext->getDeepLinkingRedirectUrl());
+
+        if (!$canvasRedirectUrl) {
+            abort(400, 'A valid redirect URL from Canvas must be provided.');
+        }
+
+        //redirect with input vars added as query params to make them available to the front-end
+        $launchUrlStem = urlencode(env('APP_URL') . '/index.php/assessment?id=');
+        $redirectUrl .= '&redirectUrl=' . $canvasRedirectUrl;
+        $redirectUrl .= '&launchUrlStem=' . $launchUrlStem;
+        return redirect($redirectUrl);
     }
 
     /**
@@ -58,7 +73,7 @@ class CollectionController extends \BaseController
     }
 
     /**
-    * Display a single collection.
+    * GET request to show the select screen after a valid LTI launch and redirect.
     *
     * @param  int  $id
     * @return View
@@ -70,7 +85,12 @@ class CollectionController extends \BaseController
         $launchUrlStem = $request->get('launchUrlStem');
 
         if (!$redirectUrl || !$launchUrlStem) {
-            abort(500, 'Redirect url and launch url are required.');
+            abort(400, 'Redirect url and launch url are required.');
+        }
+
+        $authFilter = new AuthFilter($request);
+        if (!$authFilter->isValidRedirect()) {
+            abort(403, 'Unauthorized: please launch the tool from an external tool launch in Canvas.');
         }
 
         return displaySPA();

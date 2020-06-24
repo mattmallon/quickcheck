@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { UtilitiesService } from '../../services/utilities.service';
 import { ManageService } from '../../services/manage.service';
 import { Submission } from '../../classes/submission';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'qc-view-attempts-for-student',
@@ -9,8 +10,8 @@ import { Submission } from '../../classes/submission';
   styleUrls: ['./view-attempts-for-student.component.scss']
 })
 export class ViewAttemptsForStudentComponent implements OnInit {
-
   analyticsViewVisible = false;
+  apiToken = null;
   assessmentsWithAttempts = [];
   courseContext = null;
   currentPage = 'results';
@@ -20,7 +21,10 @@ export class ViewAttemptsForStudentComponent implements OnInit {
   studentName = null;
   user = null;
 
-  constructor(public utilitiesService: UtilitiesService, private manageService: ManageService) { }
+  constructor(public utilitiesService: UtilitiesService, public authService: AuthService, private manageService: ManageService) {
+    this.apiToken = this.authService.getInstructorTokenFromStorage();
+    this.manageService.setApiToken(this.apiToken);
+  }
 
   async ngOnInit() {
     let data;

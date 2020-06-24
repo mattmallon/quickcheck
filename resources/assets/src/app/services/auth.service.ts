@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { timeout } from 'rxjs/operators';
-import { HttpService, HttpHeaders } from './http.service';
+import { HttpService } from './http.service';
 import * as moment from 'moment-timezone';
 import { ActivatedRoute } from '@angular/router';
 

@@ -89,6 +89,26 @@ class LtiContext {
     }
 
     /**
+    * If a deep link request, we should redirect to this URL once the item has been selected.
+    *
+    * @return string
+    */
+
+    public function getDeepLinkingRedirectUrl()
+    {
+        if (!$this->launchValues) {
+            return false;
+        }
+
+        $deepLinkSettings = $this->launchValues['https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings'];
+        if (!$deepLinkSettings) {
+            return false;
+        }
+
+        return $deepLinkSettings->deep_link_return_url;
+    }
+
+    /**
     * Get due at value for current launch
     *
     * @return string
