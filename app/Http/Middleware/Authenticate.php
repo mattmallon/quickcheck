@@ -24,21 +24,17 @@ class Authenticate {
         }
         //authenticated instructor passing API token in request
         else if ($apiToken) {
-            $user = User::findByApiToken($apiToken);
+            //if the user's local storage value has expired;
+            //the bearerToken() function of Laravel will return null as string rather than primitive
+            if ($apiToken == 'null') {
+                return $this->returnError();
+            }
+
+            $user = User::findByApiToken($apiToken); //will fail if user not found
             $request->merge(['user' => $user]);
         }
         else {
-            //if not an LTI launch and no API token in request, then unauthorized.
-            //most likely due to their API token expiring in local storage.
-            //send CAS redirect URL to home page if at IU. The front-end will redirect
-            //via CAS if the user is not in an iframe, otherwise user refreshes Canvas.
-            $errorData = [];
-            $casFilter = new CASfilter;
-            if ($casFilter->casEnabled()) {
-                $errorData['casRedirectUrl'] = $casFilter->getRedirectUrl();
-            }
-
-            return response()->error(403, ['Your session has expired. Please refresh the page.'], $errorData);
+            return $this->returnError();
         }
 
         if ($redirectUrl) {
@@ -47,5 +43,20 @@ class Authenticate {
         else {
             return $next($request);
         }
+    }
+
+    private function returnError()
+    {
+        //if not an LTI launch and no API token in request, then unauthorized.
+        //most likely due to their API token expiring in local storage.
+        //send CAS redirect URL to home page if at IU. The front-end will redirect
+        //via CAS if the user is not in an iframe, otherwise user refreshes Canvas.
+        $errorData = [];
+        $casFilter = new CASfilter;
+        if ($casFilter->casEnabled()) {
+            $errorData['casRedirectUrl'] = $casFilter->getRedirectUrl();
+        }
+
+        return response()->error(403, ['Your session has expired. Please refresh the page.'], $errorData);
     }
 }

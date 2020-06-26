@@ -7,7 +7,13 @@
             [collectionData]="this.collectionData"
             [utilitiesService]="this.utilitiesService">
         </qc-view-all-collections-toggle>
-        <qc-invite-admin [utilitiesService]="this.utilitiesService"></qc-invite-admin>
-        <qc-custom-activities-panel [utilitiesService]="this.utilitiesService"></qc-custom-activities-panel>
+        <qc-invite-admin
+            [utilitiesService]="this.utilitiesService"
+            [userService]="this.userService">
+        </qc-invite-admin>
+        <qc-custom-activities-panel
+            [utilitiesService]="this.utilitiesService"
+            [customActivityService]="this.customActivityService">
+        </qc-custom-activities-panel>
     </div>
 </div>

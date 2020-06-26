@@ -71,7 +71,8 @@ export class UserService {
     const timeoutLength = this.httpService.getDefaultTimeout();
     const path = this.httpService.getApiRoute() + '/publicmembership/collection/' + id;
     //to pass data in a DELETE request, have to specify it as "body" in options and also specify headers
-    const options = this.httpOptions.append('Content-Type', 'application/json');
+    const headers = this.httpOptions.headers.append('Content-Type', 'application/json');
+    const options = { headers, body: data };
 
     return await this.httpClient.delete(path, options)
       .pipe(timeout(timeoutLength))

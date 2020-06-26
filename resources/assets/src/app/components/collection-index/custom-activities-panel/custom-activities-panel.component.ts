@@ -8,12 +8,13 @@ import { CustomActivityService } from '../../../services/custom-activity.service
 })
 export class CustomActivitiesPanelComponent implements OnInit {
   @Input() utilitiesService;
+  @Input() customActivityService: CustomActivityService;
 
   customActivities = [];
   isOpen = false;
   loading = false;
 
-  constructor(private customActivityService: CustomActivityService) { }
+  constructor() { }
 
   ngOnInit() {
   }

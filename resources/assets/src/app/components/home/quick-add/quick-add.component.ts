@@ -9,7 +9,7 @@ import { CollectionService } from '../../../services/collection.service';
 })
 export class QuickAddComponent implements OnInit {
   @Input() utilitiesService: UtilitiesService;
-  @Input() apiToken;
+  @Input() collectionService: CollectionService;
   @Output() onCancel = new EventEmitter();
 
   assessment = { collection: { id: '', name: null, assessment_groups: [] }, assessmentGroup: { id: '', name: null }, name: null }; //data to be passed back if adding a new quick check
@@ -18,10 +18,9 @@ export class QuickAddComponent implements OnInit {
   newAssessmentGroupAdded = false; //if adding a new assessment group on the fly
   selectedCollection = { id: '', name: null, assessment_groups: []}; //if adding, collection selected, from which we can draw assessment groups to select
 
-  constructor(private collectionService: CollectionService) { }
+  constructor() { }
 
   async ngOnInit() {
-    this.collectionService.setApiToken(this.apiToken);
     await this.getSets();
   }
 

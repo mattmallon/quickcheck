@@ -13,9 +13,10 @@ export class CollectionTileComponent implements OnInit {
   @Input() membership;
   @Input() index;
   @Input() utilitiesService: UtilitiesService;
+  @Input() collectionService: CollectionService;
   isReadOnly = false;
 
-  constructor(private collectionService: CollectionService) { }
+  constructor() { }
 
   ngOnInit() {
     this.utilitiesService.setLtiHeight();

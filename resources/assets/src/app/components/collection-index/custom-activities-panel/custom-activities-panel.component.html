@@ -11,6 +11,7 @@
         <p>Custom activities can be developed in html/css/js and function as assessments. The source files should first be uploaded within the directory "public/customActivities/".</p>
         <qc-add-custom-activity
             [utilitiesService]="this.utilitiesService"
+            [customActivityService]="this.customActivityService"
             (onSave)="this.onSave($event)">
         </qc-add-custom-activity>
         <div class="custom-activities-list">
@@ -32,7 +33,8 @@
                         [customActivity]="customActivity"
                         [index]="$index"
                         (onDelete)="this.onDelete($event)"
-                        [utilitiesService]="this.utilitiesService">
+                        [utilitiesService]="this.utilitiesService"
+                        [customActivityService]="this.customActivityService">
                     </qc-custom-activity>
                 </div>
                 <div *ngIf="!this.customActivities.length" class="qc-custom-none-added">

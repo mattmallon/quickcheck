@@ -9,7 +9,7 @@
                     <qc-quick-add *ngIf="this.isAddingAssessment"
                         (onCancel)="this.cancelAdd($event)"
                         [utilitiesService]="this.utilitiesService"
-                        [apiToken]="this.apiToken">
+                        [collectionService]="this.collectionService">
                     </qc-quick-add>
                 </div>
             </div>

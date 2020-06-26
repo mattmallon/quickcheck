@@ -9,11 +9,13 @@ import { UserService } from '../../../services/user.service';
 })
 export class PublicCollectionsComponent implements OnInit {
   @Input() user;
+  @Input() collectionService: CollectionService;
+  @Input() userService: UserService;
   @Input() utilitiesService;
 
   publicCollections = [];
 
-  constructor(private collectionService: CollectionService, private userService: UserService) { }
+  constructor() { }
 
   async ngOnInit() {
     try {

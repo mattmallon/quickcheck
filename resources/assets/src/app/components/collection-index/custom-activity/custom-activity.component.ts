@@ -12,11 +12,12 @@ export class CustomActivityComponent implements OnInit {
   @Input() index;
   @Output() onDelete = new EventEmitter();
   @Input() utilitiesService;
+  @Input() customActivityService: CustomActivityService;
 
   editingData; //copy to separate object so if user cancels edit, data is intact
   isEditing = false;
 
-  constructor(private customActivityService: CustomActivityService) { }
+  constructor() { }
 
   ngOnInit() {
     //accordion closed by default

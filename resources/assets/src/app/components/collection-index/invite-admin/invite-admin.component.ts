@@ -8,6 +8,7 @@ import { UserService } from '../../../services/user.service';
 })
 export class InviteAdminComponent implements OnInit {
   @Input() utilitiesService;
+  @Input() userService: UserService;
 
   isEnteringUsername = false;
   formOpen = false;
@@ -19,7 +20,7 @@ export class InviteAdminComponent implements OnInit {
   userValidated = false;
   validatedUser = null;
 
-  constructor(private userService: UserService) { }
+  constructor() { }
 
   ngOnInit() {
   }

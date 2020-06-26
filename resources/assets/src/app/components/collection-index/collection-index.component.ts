@@ -3,6 +3,7 @@ import { CollectionService } from '../../services/collection.service';
 import { UserService } from '../../services/user.service';
 import { UtilitiesService } from '../../services/utilities.service';
 import { AuthService } from '../../services/auth.service';
+import { CustomActivityService } from '../../services/custom-activity.service';
 
 @Component({
   selector: 'qc-collection-index',
@@ -25,13 +26,15 @@ export class CollectionIndexComponent implements OnInit {
 
   constructor(
     public utilitiesService: UtilitiesService,
-    private userService: UserService,
-    private collectionService: CollectionService,
-    public authService: AuthService
+    public userService: UserService,
+    public collectionService: CollectionService,
+    public authService: AuthService,
+    public customActivityService: CustomActivityService
   ) {
     this.apiToken = this.authService.getInstructorTokenFromStorage();
     this.userService.setApiToken(this.apiToken);
     this.collectionService.setApiToken(this.apiToken);
+    this.customActivityService.setApiToken(this.apiToken);
   }
 
   async ngOnInit() {

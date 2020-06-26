@@ -8,12 +8,13 @@ import { CustomActivityService } from '../../../services/custom-activity.service
 })
 export class AddCustomActivityComponent implements OnInit {
   @Input() utilitiesService;
+  @Input() customActivityService: CustomActivityService;
   @Output() onSave = new EventEmitter();
 
   customActivityData;
   isOpen = false;
 
-  constructor(private customActivityService: CustomActivityService) { }
+  constructor() { }
 
   ngOnInit() {
     this.resetData();

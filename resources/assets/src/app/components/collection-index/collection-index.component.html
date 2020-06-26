@@ -6,7 +6,10 @@
         <qc-error-message *ngIf="this.utilitiesService.errorFound" [utilitiesService]="this.utilitiesService"></qc-error-message>
         <qc-admin-panel *ngIf="this.admin"
             [collectionData]="this.adminCollectionData"
-            [utilitiesService]="this.utilitiesService">
+            [utilitiesService]="this.utilitiesService"
+            [userService]="this.userService"
+            [customActivityService]="this.customActivityService"
+            >
         </qc-admin-panel>
         <div class="row">
             <div class="col-4 col-md-3">
@@ -28,7 +31,9 @@
         <div>
             <qc-public-collections [hidden]="!this.publicCollectionsVisible"
                 [user]="this.user"
-                [utilitiesService]="this.utilitiesService">
+                [utilitiesService]="this.utilitiesService"
+                [collectionService]="this.collectionService"
+                [userService]="this.userService">
             </qc-public-collections>
             <div *ngIf="!this.adminCollectionData.viewAll">
                 <div *ngIf="!this.memberships.length && !this.utilitiesService.loading">
@@ -45,7 +50,8 @@
                                 [collection]="membership.collection"
                                 [membership]="membership"
                                 [index]="i"
-                                [utilitiesService]="this.utilitiesService">
+                                [utilitiesService]="this.utilitiesService"
+                                [collectionService]="this.collectionService">
                             </qc-collection-tile>
                             <qc-collection-tile
                                 *ngIf="this.searchedMemberships[i + 1]"
@@ -53,7 +59,8 @@
                                 [collection]="this.searchedMemberships[i + 1].collection"
                                 [membership]="this.searchedMemberships[i + 1]"
                                 [index]="i + 1"
-                                [utilitiesService]="this.utilitiesService">
+                                [utilitiesService]="this.utilitiesService"
+                                [collectionService]="this.collectionService">
                             </qc-collection-tile>
                         </div>
                     </div>
@@ -73,13 +80,15 @@
                                 class="col-12 col-sm-5"
                                 [collection]="collection"
                                 [index]="i"
-                                [utilitiesService]="this.utilitiesService">
+                                [utilitiesService]="this.utilitiesService"
+                                [collectionService]="this.collectionService">
                             </qc-collection-tile>
                             <qc-collection-tile
                                 class="col-12 col-sm-5 offset-sm-1"
                                 [collection]="this.searchedAdminCollections[i + 1]"
                                 [index]="i + 1"
-                                [utilitiesService]="this.utilitiesService">
+                                [utilitiesService]="this.utilitiesService"
+                                [collectionService]="this.collectionService">
                             </qc-collection-tile>
                         </div>
                     </div>
@@ -90,5 +99,6 @@
 </div>
 <qc-add-collection
     (onSave)="this.onCollectionAdded($event)"
-    [utilitiesService]="this.utilitiesService">
+    [utilitiesService]="this.utilitiesService"
+    [collectionService]="this.collectionService">
 </qc-add-collection>

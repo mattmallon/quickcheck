@@ -256,6 +256,30 @@ export class UtilitiesService {
     return preview ? preview : false;
   }
 
+  getCasRedirectUrl(data) {
+    let casRedirectUrl = null;
+    if (!data) {
+      return false;
+    }
+
+    if (!data.data) {
+      return false;
+    }
+
+    //only present if CAS enabled on back-end (at IU)
+    casRedirectUrl = data.data.casRedirectUrl;
+    if (!casRedirectUrl) {
+      return false;
+    }
+
+    //if in an iframe, it's an LTI launch
+    if (this.isInIframe()) {
+      return false;
+    }
+
+    return casRedirectUrl;
+  }
+
   getQueryParam(paramName) {
     let params = this.route.snapshot.queryParamMap;
 
@@ -418,8 +442,13 @@ export class UtilitiesService {
   showError(resp) {
     const data = resp.error;
     const defaultMessage = 'There was an error processing your request.';
+    const casRedirectUrl = this.getCasRedirectUrl(data);
 
-    if (!data) {
+    //if user is outside of an iframe/LTI launch and CAS is enabled on back-end (at IU), redirect them to login
+    if (casRedirectUrl) {
+      window.location.replace(casRedirectUrl);
+    }
+    else if (!data) {
       this.errorList = [defaultMessage];
     }
     else if (data.errorList) {

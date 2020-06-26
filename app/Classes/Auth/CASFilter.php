@@ -68,7 +68,7 @@ class CASFilter
             return 'testinstructor';
         }
 
-        $casAnswer = $this->getCasAnswer();
+        $casAnswer = $this->getCasAnswer($casTicket);
         //split CAS answer into access and user
         list($access,$username) = explode("\n",$casAnswer,2);
         $access = trim($access);

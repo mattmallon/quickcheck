@@ -206,7 +206,7 @@ class CollectionController extends \BaseController
     public function publicIndex(Request $request)
     {
         $publicCollections = Collection::where('public_collection', '=', 'true')
-            ->with(['userMembership' => function ($query, $request) {
+            ->with(['userMembership' => function ($query) use ($request) {
                 $query->currentUser($request);
             }])
             ->get();

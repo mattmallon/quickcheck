@@ -8,12 +8,13 @@ import { CollectionService } from '../../../services/collection.service';
 })
 export class AddCollectionComponent implements OnInit {
   @Input() utilitiesService;
+  @Input() collectionService: CollectionService;
   @Output() onSave = new EventEmitter();
 
   isAddingCollection = false;
   newCollection = { name: null, description: null };
 
-  constructor(private collectionService: CollectionService) { }
+  constructor() { }
 
   ngOnInit() {
   }
