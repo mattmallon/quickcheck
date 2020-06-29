@@ -50,10 +50,9 @@ class QtiController extends \BaseController
     public function importQTI(Request $request) {
         $zipName = 'importFile';
         if ($request->file($zipName)->getClientOriginalExtension() === 'zip') {
-            $input = $request->all();
             $zipFile = $request->file($zipName);
             $qti = new QTI();
-            $response = $qti->importQTI($input, $zipFile);
+            $response = $qti->importQTI($request, $zipFile);
             return response()->success($response);
         }
         else {

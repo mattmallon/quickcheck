@@ -33,6 +33,7 @@
                 [courseContext]="this.courseContext"
                 [studentId]="this.studentId"
                 [user]="this.user"
+                [manageService]="this.manageService"
                 [utilitiesService]="this.utilitiesService">
             </qc-student-assessment-attempts>
             <div class="card card-body bg-light text-center qc-none-found-well" *ngIf="!this.displayedAssessments.length && this.assessmentsWithAttempts.length">
@@ -50,6 +51,7 @@
     <qc-student-analytics
         [studentId]="this.studentId"
         [studentName]="this.studentName"
+        [manageService]="this.manageService"
         [utilitiesService]="this.utilitiesService">
     </qc-student-analytics>
 </div>

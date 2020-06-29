@@ -8,9 +8,10 @@ import { CollectionService } from '../../../services/collection.service';
 })
 export class TogglePublicCollectionComponent implements OnInit {
   @Input() collection;
+  @Input() collectionService: CollectionService;
   @Input() utilitiesService;
 
-  constructor(private collectionService: CollectionService) { }
+  constructor() { }
 
   ngOnInit() {
   }

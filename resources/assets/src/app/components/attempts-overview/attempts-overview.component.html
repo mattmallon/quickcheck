@@ -8,10 +8,12 @@
                 <h1>Student Results</h1>
             </div>
             <div class="col-6 text-right">
-                <a class="btn btn-light qc-btn qc-btn-download-csv" target="_blank" [href]="'/index.php/attempts/csv/download/' + this.utilitiesService.contextId">
-                    <span class="fa fa-cloud-download fa-2x" aria-hidden="true"></span> Download attempts <strong>CSV</strong>
-                </a>
-
+                <form ngNoForm method="POST" [action]="'/index.php/attempts/csv/download/' + this.utilitiesService.contextId" target="_blank">
+                    <input type="hidden" name="apiToken" [value]="apiToken">
+                    <button class="btn btn-light qc-btn qc-btn-download-csv" target="_blank" type="submit">
+                        <span class="fa fa-cloud-download fa-2x" aria-hidden="true"></span> Download attempts <strong>CSV</strong>
+                    </button>
+                </form>
             </div>
         </div>
         <div *ngIf="!this.isViewingByStudent()">

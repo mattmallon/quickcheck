@@ -9,12 +9,13 @@ import { CollectionService } from '../../../services/collection.service';
 export class FeaturesComponent implements OnInit {
   @Input() collectionId;
   @Input() readOnly;
+  @Input() collectionService: CollectionService;
   @Input() utilitiesService;
 
   collectionFeatures = [];
   showFeatures = false;
 
-  constructor(private collectionService: CollectionService) { }
+  constructor() { }
 
   async ngOnInit() {
     let data;

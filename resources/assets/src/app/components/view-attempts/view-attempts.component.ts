@@ -41,7 +41,7 @@ export class ViewAttemptsComponent implements OnInit {
   constructor(
     public utilitiesService: UtilitiesService,
     public authService: AuthService,
-    private manageService: ManageService,
+    public manageService: ManageService,
     private route: ActivatedRoute)
   {
     this.apiToken = this.authService.getInstructorTokenFromStorage();

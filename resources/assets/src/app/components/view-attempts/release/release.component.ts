@@ -9,12 +9,13 @@ import { ManageService } from '../../../services/manage.service';
 export class ReleaseComponent implements OnInit {
   @Input() assessmentId;
   @Input('existingRelease') release;
+  @Input() manageService: ManageService;
   @Input() utilitiesService;
 
   error;
   success;
 
-  constructor(private manageService: ManageService) { }
+  constructor() { }
 
   ngOnInit() {
   }

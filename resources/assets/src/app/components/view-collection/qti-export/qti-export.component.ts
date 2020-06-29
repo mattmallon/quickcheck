@@ -8,6 +8,7 @@ import { Component, OnInit, OnChanges, Input, Output, EventEmitter } from '@angu
 export class QtiExportComponent implements OnInit {
 	@Input() assessmentGroups;
 	@Input() isExportingQti;
+	@Input() apiToken;
 	@Output() onQtiExportCancel = new EventEmitter();
 
 	assessmentList = null;

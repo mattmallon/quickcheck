@@ -12,6 +12,7 @@ export class GradeComponent implements OnInit {
   @Input() pointsPossible;
   @Input() submissions;
   @Input() users;
+  @Input() manageService: ManageService;
   @Input() utilitiesService;
 
   editedGradeValue;
@@ -21,7 +22,7 @@ export class GradeComponent implements OnInit {
   isUserInCourse = true;
   submission = null;
 
-  constructor(private manageService: ManageService) { }
+  constructor() { }
 
   ngOnInit() {
   }

@@ -107,7 +107,7 @@ class CollectionController extends \BaseController
     * @return Response
     */
 
-    public function destroy($id)
+    public function destroy($id, Request $request)
     {
         $collection = Collection::findOrFail($id);
         if (!$collection->canUserWrite($request->user)) {
@@ -125,7 +125,7 @@ class CollectionController extends \BaseController
     * @return response (includes: collection, assessmentGroups, readOnly, collectionFeatures)
     */
 
-    public function getCollection($id)
+    public function getCollection($id, Request $request)
     {
         $collection = Collection::findOrFail($id);
         if (!$collection->canUserRead($request->user)) {
@@ -153,7 +153,7 @@ class CollectionController extends \BaseController
     * @return Response (includes current user and readOnly boolean)
     */
 
-    public function getUserPermissions($id)
+    public function getUserPermissions($id, Request $request)
     {
         $user = $request->user;
         $collection = Collection::findOrFail($id);

@@ -11,6 +11,7 @@ export class StudentAssessmentAttemptsComponent implements OnInit {
   @Input() courseContext;
   @Input() studentId;
   @Input() user;
+  @Input() manageService: ManageService;
   @Input() utilitiesService;
 
   attempts = [];
@@ -25,7 +26,7 @@ export class StudentAssessmentAttemptsComponent implements OnInit {
   submission = null;
   timezone = null;
 
-  constructor(private manageService: ManageService) { }
+  constructor() { }
 
   ngOnInit() {
     this.attempts = this.assessment.attempts;

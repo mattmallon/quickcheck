@@ -12,10 +12,10 @@ class QTI
     * @return Zip
     */
 
-    public function exportQTI(Request $request)
+    public function exportQTI($request)
     {
         $exportQTI = new ExportQTI();
-        $zip = $exportQTI->export($input);
+        $zip = $exportQTI->export($request);
         return $zip;
     }
 

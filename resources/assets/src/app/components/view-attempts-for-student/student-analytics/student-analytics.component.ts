@@ -9,8 +9,10 @@ import { ManageService } from '../../../services/manage.service';
 export class StudentAnalyticsComponent implements OnInit {
   @Input() studentId;
   @Input() studentName;
+  @Input() manageService: ManageService;
   @Input() utilitiesService;
 
+  apiToken = null; //used for CSV downloads, when sending POST request to new tab
   averageRetries = 0;
   averageScore = 0;
   averageTime = 0;
@@ -23,9 +25,10 @@ export class StudentAnalyticsComponent implements OnInit {
   totalTimeBeforeDueDate = 0;
   totalTimeAfterDueDate = 0;
 
-  constructor(private manageService: ManageService) { }
+  constructor() { }
 
   async ngOnInit() {
+    this.apiToken = this.manageService.apiToken;
     this.getAnalytics();
   }
 

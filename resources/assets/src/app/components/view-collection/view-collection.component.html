@@ -29,6 +29,7 @@
                     <qc-toggle-public-collection
                         *ngIf="this.admin && this.collection"
                         [collection]="this.collection"
+                        [collectionService]="this.collectionService"
                         [utilitiesService]="this.utilitiesService">
                     </qc-toggle-public-collection>
                 </div>
@@ -65,12 +66,14 @@
             <qc-qti-import [hidden]="!this.isImportingQti"
                 [assessmentGroups]="this.assessmentGroups"
                 [isImportingQti]="this.isImportingQti"
+                [collectionService]="this.collectionService"
                 (onQtiImportCancel)="this.onQtiImportCancel($event)">
             </qc-qti-import>
 
             <qc-qti-export [hidden]="!this.isExportingQti"
                 [assessmentGroups]="this.assessmentGroups"
                 [isExportingQti]="this.isExportingQti"
+                [apiToken]="this.apiToken"
                 (onQtiExportCancel)="this.onQtiExportCancel($event)">
             </qc-qti-export>
         </div>
@@ -79,11 +82,14 @@
                 [collectionId]="this.collectionId"
                 [currentUser]="this.currentUser"
                 [readOnly]="this.readOnly"
+                [collectionService]="this.collectionService"
+                [userService]="this.userService"
                 [utilitiesService]="this.utilitiesService">
             </qc-users>
             <qc-features
                 [collectionId]="this.collectionId"
                 [readOnly]="this.readOnly"
+                [collectionService]="this.collectionService"
                 [utilitiesService]="this.utilitiesService">
             </qc-features>
             <h2 class="qc-h1-style">Subsets</h2>
@@ -91,6 +97,7 @@
                 *ngIf="!this.readOnly"
                 [collectionId]="this.collectionId"
                 (onSave)="this.onAssessmentGroupSaved($event)"
+                [collectionService]="this.collectionService"
                 [utilitiesService]="this.utilitiesService">
             </qc-add-assessment-group>
             <p *ngIf="!this.assessmentGroups.length && !this.readOnly && !this.utilitiesService.loading" class="lead qc-subset-instructions">Looks like you haven't added a subset yet. A subset is a way to organize your quick checks. All quick checks must belong to a subset group. Click the button to add a new subset to get started.</p>
@@ -103,6 +110,8 @@
                     (onAssessmentCopy)="this.onAssessmentCopy($event)"
                     (onDelete)="this.onAssessmentGroupDeleted($event)"
                     [readOnly]="this.readOnly"
+                    [collectionService]="this.collectionService"
+                    [assessmentEditService]="this.assessmentEditService"
                     [utilitiesService]="this.utilitiesService">
                 </qc-assessment-group>
             </div>

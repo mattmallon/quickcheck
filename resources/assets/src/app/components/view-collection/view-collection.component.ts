@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CollectionService } from '../../services/collection.service';
 import { UserService } from '../../services/user.service';
+import { AssessmentEditService } from '../../services/assessment-edit.service';
 import { UtilitiesService } from '../../services/utilities.service';
 import { AuthService } from '../../services/auth.service';
 
@@ -27,12 +28,14 @@ export class ViewCollectionComponent implements OnInit {
   constructor(
     public utilitiesService: UtilitiesService,
     public authService: AuthService,
-    private userService: UserService,
-    private collectionService: CollectionService
+    public userService: UserService,
+    public collectionService: CollectionService,
+    public assessmentEditService: AssessmentEditService
   ) {
     this.apiToken = this.authService.getInstructorTokenFromStorage();
     this.userService.setApiToken(this.apiToken);
     this.collectionService.setApiToken(this.apiToken);
+    this.assessmentEditService.setApiToken(this.apiToken);
   }
 
   async ngOnInit() {

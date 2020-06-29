@@ -9,12 +9,13 @@ import { CollectionService } from '../../../services/collection.service';
 export class AddAssessmentGroupComponent implements OnInit {
   @Input() collectionId;
   @Input() utilitiesService;
+  @Input() collectionService: CollectionService;
   @Output() onSave = new EventEmitter();
 
   formOpen = false;
   newAssessmentGroup = null;
 
-  constructor(private collectionService: CollectionService) { }
+  constructor() { }
 
   ngOnInit() {
   }

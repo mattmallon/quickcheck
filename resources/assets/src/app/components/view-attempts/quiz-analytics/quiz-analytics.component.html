@@ -4,12 +4,18 @@
             <h1>Analytics for {{ this.assessment.name }}</h1>
         </div>
         <div class="col-6 text-right">
-            <a class="btn btn-light qc-btn qc-btn-download-csv qc-btn-responses-csv" target="_blank" [href]="'/index.php/responses/csv/download/assessment/' + this.assessment.id + '/context/' + this.utilitiesService.contextId">
-                <span class="fa fa-cloud-download fa-2x" aria-hidden="true"></span> Download responses <strong>CSV</strong>
-            </a>
-            <a class="btn btn-light qc-btn qc-btn-download-csv qc-btn-attempts-csv" target="_blank" [href]="'/index.php/attempts/csv/download/context/' + this.utilitiesService.contextId + '/assessment/' + this.assessment.id">
-                <span class="fa fa-cloud-download fa-2x" aria-hidden="true"></span> Download attempts <strong>CSV</strong>
-            </a>
+            <form ngNoForm method="POST" target="_blank" [action]="'/index.php/responses/csv/download/assessment/' + this.assessment.id + '/context/' + this.utilitiesService.contextId">
+                <input type="hidden" name="apiToken" [value]="apiToken">
+                <button class="btn btn-light qc-btn qc-btn-download-csv qc-btn-responses-csv" type="submit">
+                    <span class="fa fa-cloud-download fa-2x" aria-hidden="true"></span> Download responses <strong>CSV</strong>
+                </button>
+            </form>
+            <form ngNoForm method="POST" target="_blank" [action]="'/index.php/attempts/csv/download/context/' + this.utilitiesService.contextId + '/assessment/' + this.assessment.id">
+                <input type="hidden" name="apiToken" [value]="apiToken">
+                <button class="btn btn-light qc-btn qc-btn-download-csv qc-btn-attempts-csv" type="submit">
+                    <span class="fa fa-cloud-download fa-2x" aria-hidden="true"></span> Download attempts <strong>CSV</strong>
+                </button>
+            </form>
         </div>
     </div>
     <div class="row section-white" *ngIf="this.analytics">

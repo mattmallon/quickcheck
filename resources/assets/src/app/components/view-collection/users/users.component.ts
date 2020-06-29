@@ -12,6 +12,8 @@ export class UsersComponent implements OnInit {
   @Input() collectionId;
   @Input() currentUser;
   @Input() readOnly;
+  @Input() collectionService: CollectionService;
+  @Input() userService: UserService;
   @Input() utilitiesService;
 
   collectionUsers = [];
@@ -36,7 +38,7 @@ export class UsersComponent implements OnInit {
   };
   showUsers = false;
 
-  constructor(private collectionService: CollectionService, private userService: UserService) { }
+  constructor() { }
 
   async ngOnInit() {
     await this.getCollectionUsers();

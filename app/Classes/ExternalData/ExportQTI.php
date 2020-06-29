@@ -42,7 +42,7 @@ class ExportQti {
     * @return string  $zipPath
     */
 
-    public function export(Request $request)
+    public function export($request)
     {
         $input = $request->all();
         $this->user = $request->user;

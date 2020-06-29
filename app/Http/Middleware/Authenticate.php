@@ -14,8 +14,11 @@ class Authenticate {
     {
         $redirectUrl = false;
         $apiToken = $request->bearerToken();
-        //TODO: also check for API token in request POST params, as may be the case for CSV and QTI downloads,
-        //where we are making a browser request to the page rather than an API call in order to stream download.
+        //for CSV and QTI exports where a file download is required, they're opened in a new tab, so an async
+        //request is not possible. instead, a POST form request is sent in a new tab, with API token in request.
+        if ($request->has('apiToken')) {
+            $apiToken = $request->input('apiToken');
+        }
 
         //give priority to LTI authentication
         if ($request->input('id_token')) { //LTI 1.3 launch with JWT token

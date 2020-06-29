@@ -1,4 +1,5 @@
 import { Component, OnInit, OnChanges, Input, Output, EventEmitter } from '@angular/core';
+import { ManageService } from '../../../services/manage.service';
 
 @Component({
   selector: 'qc-attempt-data',
@@ -17,6 +18,7 @@ export class AttemptDataComponent implements OnInit {
   @Input() showResponses;
   @Input() submissions;
   @Input() users;
+  @Input() manageService: ManageService;
   @Input() utilitiesService;
 
   itemSize = 45; //angular infinite scrolling requires item size

@@ -42,6 +42,7 @@
                         [pointsPossible]="this.pointsPossible"
                         [submissions]="this.submissions"
                         [ungradedAttempts]="this.ungradedAttempts"
+                        [manageService]="this.manageService"
                         [utilitiesService]="this.utilitiesService">
                     </qc-auto-grade>
                 </div>
@@ -49,6 +50,7 @@
                     <qc-release
                         [assessmentId]="this.assessmentId"
                         [existingRelease]="this.release"
+                        [manageService]="this.manageService"
                         [utilitiesService]="this.utilitiesService" >
                     </qc-release>
                 </div>
@@ -74,6 +76,7 @@
                 [showResponses]="true"
                 [submissions]="this.submissions"
                 [users]="this.users"
+                [manageService]="this.manageService"
                 [utilitiesService]="this.utilitiesService"
                 (onViewResponses)="this.viewResponses($event)">
             </qc-attempt-data>
@@ -110,6 +113,7 @@
     <qc-quiz-analytics
         [assessment]="this.assessment"
         [assignmentId]="this.assignmentId"
+        [manageService]="this.manageService"
         [utilitiesService]="this.utilitiesService">
     </qc-quiz-analytics>
 </div>

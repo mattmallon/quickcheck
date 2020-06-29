@@ -5,6 +5,7 @@
         <qc-error-message *ngIf="this.utilitiesService.errorFound" [utilitiesService]="this.utilitiesService"></qc-error-message>
         <qc-releases *ngIf="this.view == 'releases'" [hidden]="this.utilitiesService.loading"
             (onViewAttempts)="this.viewAttempts($event)"
+            [manageService]="this.manageService"
             [utilitiesService]="this.utilitiesService">
         </qc-releases>
         <div *ngIf="this.view == 'attempts'" [hidden]="this.utilitiesService.loading">
@@ -20,6 +21,7 @@
                 [isVisible]="this.isAttemptsView()"
                 [largeClassSize]="false"
                 [showResponses]="this.showResponses"
+                [manageService]="this.manageService"
                 [utilitiesService]="this.utilitiesService"
                 (onViewResponses)="this.viewResponses($event)">
             </qc-attempt-data>

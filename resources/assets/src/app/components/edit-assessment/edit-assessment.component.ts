@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { AssessmentEditService } from '../../services/assessment-edit.service';
+import { CustomActivityService } from '../../services/custom-activity.service';
 import { UserService } from '../../services/user.service';
 import { UtilitiesService } from '../../services/utilities.service';
 import * as cloneDeep from 'lodash/cloneDeep';
@@ -36,6 +37,7 @@ export class EditAssessmentComponent implements OnInit, CanDeactivateGuard {
   constructor(
     public utilitiesService: UtilitiesService,
     public authService: AuthService,
+    public customActivityService: CustomActivityService,
     private userService: UserService,
     private assessmentEditService: AssessmentEditService
   )
@@ -43,6 +45,7 @@ export class EditAssessmentComponent implements OnInit, CanDeactivateGuard {
     this.apiToken = this.authService.getInstructorTokenFromStorage();
     this.userService.setApiToken(this.apiToken);
     this.assessmentEditService.setApiToken(this.apiToken);
+    this.customActivityService.setApiToken(this.apiToken);
 
     //Ask user if they really want to leave the page if unsaved changes
     window.addEventListener("beforeunload", (event) => {

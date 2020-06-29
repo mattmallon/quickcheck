@@ -1,7 +1,6 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { AssessmentEditService } from '../../../services/assessment-edit.service';
 import { CollectionService } from '../../../services/collection.service';
-import { HttpService } from '../../../services/http.service';
 import * as cloneDeep from 'lodash/cloneDeep';
 
 @Component({
@@ -13,6 +12,8 @@ export class AssessmentGroupComponent implements OnInit {
   @Input() assessmentGroup;
   @Input() assessmentGroupIndex;
   @Input() readOnly;
+  @Input() collectionService: CollectionService;
+  @Input() assessmentEditService: AssessmentEditService;
   @Input() utilitiesService;
   @Output() onAssessmentCopy = new EventEmitter();
   @Output() onDelete = new EventEmitter();
@@ -27,11 +28,7 @@ export class AssessmentGroupComponent implements OnInit {
   memberships = null;
   newAssessment = null;
 
-  constructor(
-  private httpService: HttpService,
-  private collectionService: CollectionService,
-  private assessmentEditService: AssessmentEditService
-  ) { }
+  constructor() { }
 
   ngOnInit() {
     //initialize element selectors that can be focused to for accessibility

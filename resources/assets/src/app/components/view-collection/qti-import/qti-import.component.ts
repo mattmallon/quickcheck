@@ -10,6 +10,7 @@ import { CollectionService } from '../../../services/collection.service';
 export class QtiImportComponent implements OnInit {
   @Input() assessmentGroups;
   @Input() isImportingQti;
+  @Input() collectionService: CollectionService;
   @Output() onQtiImportCancel = new EventEmitter();
 
   assessmentGroupId = null;
@@ -21,7 +22,7 @@ export class QtiImportComponent implements OnInit {
   uploading = false;
   zipFile = null;
 
-  constructor(private collectionService: CollectionService, public utilitiesService: UtilitiesService) { }
+  constructor(public utilitiesService: UtilitiesService) { }
 
   ngOnInit() {
     this.utilitiesService.setLtiHeight();

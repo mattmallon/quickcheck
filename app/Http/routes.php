@@ -111,13 +111,11 @@ Route::group(['middleware' => ['manageAuth']], function() {
 /********************************************************************/
 
 Route::group(array('middleware' => array('auth')), function() {
-    //TODO: need to figure out an auth mechanism for this, perhaps exchange API token for temp cached auth token in query param;
-    //Or a form POST in new tab, include API token in a request field instead of header.
     //CSV downloads
-    Route::get('attempts/csv/download/{context_id}/{student_id?}', 'CSVController@exportCourseAttempts');
-    Route::get('attempts/csv/download/context/{context_id}/assessment/{assessment_id}', 'CSVController@exportAssessmentAttempts');
-    Route::get('responses/csv/download/assessment/{assessment_id}/context/{context_id}', 'CSVController@exportAssessmentResponses');
-    Route::get('users/csv/groups/course/{courseId}', 'CSVController@getUsersInGroups');
+    Route::post('attempts/csv/download/{context_id}/{student_id?}', 'CSVController@exportCourseAttempts');
+    Route::post('attempts/csv/download/context/{context_id}/assessment/{assessment_id}', 'CSVController@exportAssessmentAttempts');
+    Route::post('responses/csv/download/assessment/{assessment_id}/context/{context_id}', 'CSVController@exportAssessmentResponses');
+    Route::post('users/csv/groups/course/{courseId}', 'CSVController@getUsersInGroups');
     //QTI downloads
     Route::post('exportQTI', 'QtiController@exportQTI');
 

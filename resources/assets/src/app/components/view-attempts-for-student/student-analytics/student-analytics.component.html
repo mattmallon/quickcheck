@@ -3,9 +3,12 @@
         <h1>Analytics for {{ this.studentName }}</h1>
     </div>
     <div class="col-6 text-right">
-        <a class="btn btn-light qc-btn qc-btn-download-csv qc-btn-attempts-csv" target="_blank" [href]="'/index.php/attempts/csv/download/' + this.utilitiesService.contextId + '/' + this.studentId">
-            <span class="fa fa-cloud-download fa-2x" aria-hidden="true"></span> Download attempts <strong>CSV</strong>
-        </a>
+        <form ngNoForm method="POST" [action]="'/index.php/attempts/csv/download/' + this.utilitiesService.contextId + '/' + this.studentId" target="_blank">
+            <input type="hidden" name="apiToken" [value]="apiToken">
+            <button class="btn btn-light qc-btn qc-btn-download-csv qc-btn-attempts-csv" target="_blank" type="submit">
+                <span class="fa fa-cloud-download fa-2x" aria-hidden="true"></span> Download attempts <strong>CSV</strong>
+            </button>
+        </form>
     </div>
 </div>
 <div class="row section-white" *ngIf="!this.utilitiesService.loading">

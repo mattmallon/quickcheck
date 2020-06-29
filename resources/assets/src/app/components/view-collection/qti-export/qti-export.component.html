@@ -36,6 +36,7 @@
         </div>
         <form ngNoForm method="POST" action="/exportQTI" target="_blank">
             <input type="hidden" *ngFor="let assessment of this.assessments; index as $index;" name="assessments[{{$index}}]" [value]="assessment">
+            <input type="hidden" name="apiToken" [value]="apiToken">
             <button type="submit" class="btn btn-primary qc-btn" [disabled]="!this.assessments.length">Export QTI package</button>
             <button type="button" class="btn btn-outline-dark qc-btn" (click)="this.cancelQtiExport()">Close <span class="sr-only">QTI export panel</span></button>
         </form>

@@ -162,7 +162,7 @@ class AssessmentController extends \BaseController
     * @return Response
     */
 
-    public function destroy($id)
+    public function destroy($id, Request $request)
     {
         $assessment = Assessment::findOrFail($id);
         if (!$assessment->canUserWrite($request->user)) {
@@ -180,7 +180,7 @@ class AssessmentController extends \BaseController
     * @return Response
     */
 
-    public function getAssessment($id)
+    public function getAssessment($id, Request $request)
     {
         $assessment = Assessment::findOrFail($id);
         $collection = $assessment->assessmentGroup->collection;

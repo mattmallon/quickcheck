@@ -19,7 +19,7 @@ export class StudentViewComponent implements OnInit {
   showResponses = false; //set by feature toggling on collection, by instructor preference
   view = 'releases';
 
-  constructor(public utilitiesService: UtilitiesService, public authService: AuthService, private manageService: ManageService) { }
+  constructor(public utilitiesService: UtilitiesService, public authService: AuthService, public manageService: ManageService) { }
 
   async ngOnInit() {
     this.utilitiesService.setTitle('Quick Check - View Your Results');

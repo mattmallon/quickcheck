@@ -21,7 +21,7 @@ export class ViewAttemptsForStudentComponent implements OnInit {
   studentName = null;
   user = null;
 
-  constructor(public utilitiesService: UtilitiesService, public authService: AuthService, private manageService: ManageService) {
+  constructor(public utilitiesService: UtilitiesService, public authService: AuthService, public manageService: ManageService) {
     this.apiToken = this.authService.getInstructorTokenFromStorage();
     this.manageService.setApiToken(this.apiToken);
   }

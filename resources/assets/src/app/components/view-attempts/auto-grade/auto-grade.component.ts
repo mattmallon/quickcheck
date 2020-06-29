@@ -12,6 +12,7 @@ export class AutoGradeComponent implements OnInit {
   @Input() submissions;
   @Input() ungradedAttempts;
   @Input() utilitiesService;
+  @Input() manageService: ManageService;
   @Output() onSuccess = new EventEmitter();
 
   error;
@@ -22,7 +23,7 @@ export class AutoGradeComponent implements OnInit {
   successfulSubmissions = [];
   ungradedAssessment = false;
 
-  constructor(private manageService: ManageService) { }
+  constructor() { }
 
   ngOnInit() {
     //if not placed in an assignment, or for 0 points, ungraded, no autograde possible

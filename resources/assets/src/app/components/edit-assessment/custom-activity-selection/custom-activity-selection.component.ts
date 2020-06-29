@@ -11,13 +11,14 @@ export class CustomActivitySelectionComponent implements OnInit {
   @Input() assessment;
   @Input() customActivity;
   @Input() customActivityAdded;
+  @Input() customActivityService: CustomActivityService;
   @Input() readOnly;
   @Input() utilitiesService;
 
   customActivities = [];
   saved = false;
 
-  constructor(private customActivityService: CustomActivityService) { }
+  constructor() { }
 
   async ngOnInit() {
     this.utilitiesService.setLtiHeight();

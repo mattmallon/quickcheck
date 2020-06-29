@@ -8,12 +8,13 @@ import { ManageService } from '../../../services/manage.service';
 })
 export class ReleasesComponent implements OnInit {
   @Input() utilitiesService;
+  @Input() manageService: ManageService;
   @Output() onViewAttempts = new EventEmitter();
 
   releases = [];
   search = {'assessmentName': ''}; //for searching through attempts
 
-  constructor(private manageService: ManageService) { }
+  constructor() { }
 
   async ngOnInit() {
     let data;

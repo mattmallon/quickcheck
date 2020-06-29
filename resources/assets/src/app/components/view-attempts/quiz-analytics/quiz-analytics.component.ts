@@ -10,18 +10,21 @@ import { ManageService } from '../../../services/manage.service';
 export class QuizAnalyticsComponent implements OnInit {
   @Input() assessment;
   @Input() assignmentId;
+  @Input() manageService: ManageService;
   @Input() utilitiesService : UtilitiesService;
 
   analytics = null;
+  apiToken = null; //used for CSV downloads, when POSTing form to new tab
   avgAttempts;
   avgTime;
   medianScore;
   numAttempts;
   questions;
 
-  constructor(private manageService: ManageService) { }
+  constructor() { }
 
   async ngOnInit() {
+    this.apiToken = this.manageService.apiToken;
     await this.getAnalytics();
   }
 
