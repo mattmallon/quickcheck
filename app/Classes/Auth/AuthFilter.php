@@ -4,6 +4,7 @@ namespace App\Classes\Auth;
 use App\Classes\Auth\CASFilter;
 use App\Classes\LTI\LtiContext;
 use App\Models\User;
+use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 

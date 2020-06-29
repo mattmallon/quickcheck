@@ -1,8 +1,8 @@
 <qc-loading [hidden]="!this.utilitiesService.loading"></qc-loading>
-<div class="row section-white">
+<qc-error-message *ngIf="this.utilitiesService.errorFound" [utilitiesService]="this.utilitiesService"></qc-error-message>
+<div class="row section-white" *ngIf="this.apiToken">
     <div class="col-12" >
         <h1>Results</h1>
-        <qc-error-message *ngIf="this.utilitiesService.errorFound" [utilitiesService]="this.utilitiesService"></qc-error-message>
         <qc-releases *ngIf="this.view == 'releases'" [hidden]="this.utilitiesService.loading"
             (onViewAttempts)="this.viewAttempts($event)"
             [manageService]="this.manageService"

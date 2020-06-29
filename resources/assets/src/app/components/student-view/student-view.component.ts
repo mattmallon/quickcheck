@@ -37,6 +37,7 @@ export class StudentViewComponent implements OnInit {
     if (data) {
       this.apiToken = data.apiToken;
       this.authService.storeStudentToken(this.apiToken);
+      this.manageService.setApiToken(this.apiToken);
     }
   }
 

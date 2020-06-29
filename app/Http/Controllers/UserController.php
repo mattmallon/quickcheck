@@ -3,6 +3,7 @@
 use App\Classes\ExternalData\CanvasAPI;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Student;
 use Illuminate\Support\Facades\Cache;
 
 class UserController extends \BaseController
