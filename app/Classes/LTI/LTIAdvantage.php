@@ -6,48 +6,83 @@ use Illuminate\Http\Request;
 use \Firebase\JWT\JWT;
 use \Firebase\JWT\JWK;
 use DateTime;
+use Illuminate\Support\Facades\Cache;
 
 class LTIAdvantage {
     private $aud;
     private $iss;
-    private $deploymentKey;
     private $jwtHeader;
     private $jwtBody;
     private $jwtSignature;
     private $oauthHeader;
+    private $oauthTokenEndpoint = 'http://lti-ri.imsglobal.org/platforms/3/access_tokens';
     private $publicKey;
     private $request = false;
     public $launchValues;
-    public $valid;
+    public $valid = false;
 
     public function __construct() {
-        $this->valid = false;
         $this->request = request();
-        $this->oauthTokenEndpoint = 'http://lti-ri.imsglobal.org/platforms/3/access_tokens';
-        $this->decodeLaunchJwt();
+    }
 
-        //TODO: Supposedly this is something that typically happens out of band,
-        //rather than on an LTI launch? So this may have to move once Canvas is ready.
-        if (!$this->isToolRegistered()) {
-            $this->registerTool();
+    public function buildOIDCRedirectUrl() {
+        $iss = $this->request->input('iss');
+        $loginHint = $this->request->input('login_hint');
+        //NOTE: the target link uri is specific to the resource, so if launching from nav, it's the nav launch url
+        //rather than the default target link uri set on the tool, so that's good news.
+        $targetLinkUri = $this->request->input('target_link_uri');
+        $ltiMessageHint = $this->request->input('lti_message_hint');
+
+        if ($iss !== 'https://canvas.instructure.com' && $iss !== 'https://canvas.beta.instructure.com' && $iss !== 'https://canvas.test.instructure.com') {
+            return response()->error(400, ['OIDC issuer does not match Canvas url.']);
         }
+
+        $redirectUrl = $iss . '/api/lti/authorize_redirect';
+
+        //state and nonce are validated after the redirect to ensure they match, then removed
+        $state = uniqid('state-', true);
+        $nonce = uniqid('nonce-', true);
+        Cache::put($state, $nonce, now()->addMinutes(5));
+
+        $authParams = [
+            'scope' => 'openid', // OIDC scope
+            'response_type' => 'id_token', // OIDC response is always an id token
+            'response_mode' => 'form_post', // OIDC response is always a form post
+            'prompt' => 'none', // don't prompt user on redirect
+            'client_id' => env('LTI_CLIENT_ID'), //registered developer key ID in Canvas
+            'redirect_uri' => $targetLinkUri,
+            'state' => $state,
+            'nonce' => $nonce,
+            'login_hint' => $loginHint,
+            'lti_message_hint' => $ltiMessageHint
+        ];
+
+        $redirectUrl .= ('?' . http_build_query($authParams));
+
+        return $redirectUrl;
     }
 
     public function decodeLaunchJwt() {
         $rawJwt = $this->request->get('id_token');
+        if (!$rawJwt) {
+            abort(400, 'LTI launch error: JWT id token missing.');
+        }
+
         $splitJwt = explode('.', $rawJwt);
+        if (count($splitJwt) !== 3) {
+            abort(400, 'LTI launch error: incorrect JWT length.');
+        }
+
         $this->jwtHeader = json_decode(JWT::urlsafeB64Decode($splitJwt[0]), true);
         $this->jwtBody = json_decode(JWT::urlsafeB64Decode($splitJwt[1]), true);
         $this->jwtSignature = json_decode(JWT::urlsafeB64Decode($splitJwt[2]), true);
         $this->iss = $this->jwtBody['iss'];
-        $this->aud = $this->jwtBody['aud'][0]; //assuming this is always an array of 1?
-        $this->deploymentKey = $this->iss . $this->aud;
+        $this->aud = $this->jwtBody['aud'];
         $this->publicKey = $this->getPublicKey();
 
         //library checks the signature, makes sure it isn't expired, etc.
-        $decodedJwt = JWT::decode($rawJwt, $this->publicKey['key'], [$this->jwtHeader['alg']]);
+        $decodedJwt = JWT::decode($rawJwt, $this->publicKey, [$this->jwtHeader['alg']]);
         $this->launchValues = (array) $decodedJwt; //returns object; coerce into array
-        //dd($this->launchValues);
     }
 
     public function getLaunchValues() {
@@ -115,26 +150,6 @@ class LTIAdvantage {
         dd($jsonResponse);
     }
 
-    public function isToolRegistered() {
-        //TEMP: using session for now, probably want to use DB in future
-        //the issuer is the platform, and the audience is the tool deployment ID
-        //that the platform is giving us. So we're asking, has this deployment
-        //already been installed on this platform? It's up to the tool to determine.
-        //The plan, I think, is to save the deployment in the DB and reference that in
-        //the future to determine. Make sure the public key still matches.
-        $deployment = $this->request->session()->get($this->deploymentKey);
-
-        if (!$deployment) {
-            return false;
-        }
-
-        if ($deployment !== $this->publicKey) {
-            abort(500, 'Wrong public key.');
-        }
-
-        return true;
-    }
-
     public function isLtiAdvantageRequest() {
         $ltiVersion = $this->launchValues['http://imsglobal.org/lti/version'];
         if ($ltiVersion != 'LTI-1p3') {
@@ -144,33 +159,35 @@ class LTIAdvantage {
         return true;
     }
 
-    public function registerTool() {
-        $this->request->session()->put($this->deploymentKey, $this->publicKey);
+    public function validateLaunch()
+    {
+        $this->decodeLaunchJwt();
+        $this->validateStateAndNonce();
+        $this->validateRegistration();
+        $this->validateMessage();
     }
 
     private function getPublicKey() {
-        //this should do the trick for revolving keys with KID, but JWK is not included
-        //with the library, we're going to have to go elsewhere. Original used a random
-        //file on github that does not look very reputable, even though it does work...
-        //TODO: change Canvas instance based on current url or .env or what-have-you
-        $publicKeyUrl = 'https://canvas.test.instructure.com/api/lti/security/jwks';
-        $existingKID = $this->request->session()->get('KID');
+        //fetch revolving keys with KID
         $launchKID = $this->jwtHeader['kid'];
-        if ($launchKID != $existingKID) {
+        $publicKey = Cache::get($launchKID);
+        if (!$publicKey) {
+            $publicKeyUrl = $this->iss . '/api/lti/security/jwks';
             $publicKeyJson = file_get_contents($publicKeyUrl);
             $publicKeySet = json_decode($publicKeyJson, true);
             $parsedPublicKeySet = JWK::parseKeySet($publicKeySet);
             foreach($parsedPublicKeySet as $kid => $publicKeyItem) {
                 if ($kid == $launchKID) {
-                    $publicKey = openssl_pkey_get_details($publicKeyItem);
-                    $this->publicKey = $publicKey;
-                    $this->request->session()->put('KID', $launchKID);
-                    $this->request->session()->put('publicKey', $publicKey);
+                    $publicKeyArray = openssl_pkey_get_details($publicKeyItem);
+                    $publicKey = $publicKeyArray['key'];
+                    //not sure how often Canvas updates public keys, looks like they last for months
+                    //based on the KID values, but refreshing once a week to be on the safer side.
+                    Cache::put($launchKID, $publicKey, now()->addWeeks(1));
                 }
             }
         }
 
-        $this->publicKey = $this->request->session()->get('publicKey');
+        $this->publicKey = $publicKey;
 
         if (!$this->publicKey) {
             abort(500, 'No public key found');
@@ -225,5 +242,41 @@ class LTIAdvantage {
         $parsedValue = str_replace('\n', '', $initialValue);
         //dd($parsedValue);
         return $parsedValue;
+    }
+
+    private function validateMessage()
+    {
+        if ($this->launchValues['https://purl.imsglobal.org/spec/lti/claim/version'] !== "1.3.0") {
+            abort(400, 'LTI launch failed: incorrect LTI version.');
+        }
+
+        if (!$this->launchValues['https://purl.imsglobal.org/spec/lti/claim/message_type']) {
+            abort(400, 'LTI launch failed: no message type provided.');
+        }
+    }
+
+    private function validateRegistration()
+    {
+        $iss = $this->iss;
+        $aud = $this->aud;
+        $existingAud = env('LTI_CLIENT_ID');
+
+        if ($iss !== 'https://canvas.instructure.com' && $iss !== 'https://canvas.beta.instructure.com' && $iss !== 'https://canvas.test.instructure.com') {
+            abort(400, 'LTI launch failed: invalid issuer.');
+        }
+
+        if ($aud != $existingAud) {
+            abort(400, 'LTI launch failed: invalid aud value.');
+        }
+    }
+
+    private function validateStateAndNonce()
+    {
+        $state = $this->request->input('state');
+        $nonce = $this->launchValues['nonce'];
+        $existingNonce = Cache::pull($state);
+        if (!$existingNonce) {
+            abort(400, 'LTI launch failed: launch state and nonce do not match original values.');
+        }
     }
 }

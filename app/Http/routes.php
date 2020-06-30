@@ -17,7 +17,6 @@
 
 //health check
 Route::get('health', function() {
-    config()->set('session.driver', 'array'); //disable sessions on health check
     return response('OK', 200);
 });
 

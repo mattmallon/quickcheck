@@ -264,9 +264,10 @@ class LtiContext {
     public function initContext(Request $request)
     {
         $lti = new LTIAdvantage();
+        $lti->validateLaunch();
         $launchValues = $lti->getLaunchValues();
         $this->setLaunchValues($launchValues);
-        $this->validateLaunch();
+        $this->validateLaunchParams();
         $this->initUserContext();
         $this->initCourseContext();
     }
@@ -336,7 +337,7 @@ class LtiContext {
     * @return void
     */
 
-    public function validateLaunch()
+    public function validateLaunchParams()
     {
         $missingValue = false;
         $logMessage = 'LTI launch data missing for the following value: ';
