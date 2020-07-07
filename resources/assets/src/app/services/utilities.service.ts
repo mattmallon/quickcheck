@@ -4,6 +4,7 @@ import {environment} from '../../environments/environment';
 import * as moment from 'moment-timezone';
 import { Title } from '@angular/platform-browser';
 import * as cloneDeep from 'lodash/cloneDeep';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -18,7 +19,7 @@ export class UtilitiesService {
   scrollingLtiHeight = 0;
   sessionExpired = false;
 
-  constructor(private route: ActivatedRoute, private titleService: Title) {
+  constructor(private route: ActivatedRoute, private titleService: Title, private authService: AuthService) {
     let params = this.route.snapshot.queryParamMap;
 
     let contextId = params.get('context');
@@ -446,7 +447,9 @@ export class UtilitiesService {
 
     //if user is outside of an iframe/LTI launch and CAS is enabled on back-end (at IU), redirect them to login
     if (casRedirectUrl) {
+      this.authService.storeCasRedirectUrl();
       window.location.replace(casRedirectUrl);
+      return;
     }
     else if (!data) {
       this.errorList = [defaultMessage];

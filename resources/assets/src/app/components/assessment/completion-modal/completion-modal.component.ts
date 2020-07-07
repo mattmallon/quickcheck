@@ -1,6 +1,7 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, Output, OnInit, EventEmitter } from '@angular/core';
 import { UtilitiesService } from '../../../services/utilities.service';
 import { AssessmentService } from '../../../services/assessment.service';
+import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 
 @Component({
   selector: 'qc-completion-modal',
@@ -12,13 +13,19 @@ export class CompletionModalComponent implements OnInit {
   @Input() complete;
   @Input() pointsPossible;
   @Input() score;
+  @Output() onRestart = new EventEmitter();
 
   error = false;
   graded;
   isInModule = false;
   loading = false;
 
-  constructor(public utilitiesService: UtilitiesService, private assessmentService: AssessmentService) { }
+  constructor(
+    public utilitiesService: UtilitiesService,
+    private assessmentService: AssessmentService,
+    private bsModalRef: BsModalRef,
+    private bsModalService: BsModalService
+    ) { }
 
   async ngOnInit() {
     if (!this.complete) {
@@ -58,8 +65,8 @@ export class CompletionModalComponent implements OnInit {
   }
 
   restart() {
-    //hard page refresh to ensure a new attempt is created
-    window.location.reload();
+    this.bsModalService.setDismissReason('restart');
+    this.bsModalRef.hide();
   }
 
   async submitGrade() {

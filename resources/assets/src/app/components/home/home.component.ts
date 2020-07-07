@@ -46,7 +46,17 @@ export class HomeComponent implements OnInit {
       this.utilitiesService.showError(error);
     }
 
-    if (data) {
+    if (!data) {
+      this.utilitiesService.setError('Unable to authenticate.');
+    }
+    //if user landed here after a CAS redirect, grab original location and LTI context ID
+    //from local storage and redirect before the page is displayed.
+    else if (this.authService.isCasRedirect()) {
+      this.authService.storeInstructorToken(data.apiToken);
+      this.authService.casRedirect();
+    }
+    //otherwise, if an LTI launch, go ahead and set the API token on the page so it can be displayed
+    else {
       this.setApiTokens(data.apiToken);
     }
 

@@ -63,8 +63,15 @@ class CASFilter
 
     public function getUsernameFromCasTicket($casTicket)
     {
-        //for local development environment, return test user and don't go through CAS
+        //for local development environment, return test user and don't go through CAS;
+        //initialize API token for new test user if needed the first launch.
         if (App::environment('local')) {
+            $username = 'testinstructor';
+            $user = User::getUserFromUsername($username);
+            if (!$user->getApiToken()) {
+                $user->setApiToken();
+            }
+
             return 'testinstructor';
         }
 

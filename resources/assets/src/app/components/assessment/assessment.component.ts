@@ -10,6 +10,7 @@ import { ErrorModalComponent } from './error-modal/error-modal.component';
 import { FeedbackModalComponent } from './feedback-modal/feedback-modal.component';
 import { TimeoutModalComponent } from './timeout-modal/timeout-modal.component';
 import { Subscription } from 'rxjs';
+import { take, filter } from 'rxjs/operators';
 
 @Component({
   selector: 'qc-assessment',
@@ -24,8 +25,8 @@ export class AssessmentComponent implements OnInit {
   assessmentTitle = null;
   assessmentDescription = null;
   attemptId = null;
-  caliper = null;
   complete = false;
+  completionModalRef = null;
   countCorrect = 0;
   countIncorrect = 0;
   currentQuestion = null;
@@ -42,6 +43,7 @@ export class AssessmentComponent implements OnInit {
   pointsPossible = 0;
   preview = false; //if preview query param in URL, send to server, valid LTI session not needed
   score = 0;
+  shuffled = false;
   studentAnswer = null;
   timeoutSecondsRemaining = null; //seconds of timeout remaining, if feature enabled
 
@@ -54,8 +56,15 @@ export class AssessmentComponent implements OnInit {
     private userService: UserService
   )
   {
-    //subscribe to changes in feedback modal
-    this.modalService.onHide.subscribe(() => { this.nextQuestion() });
+    //subscribe to changes in feedback and completion modals
+    this.modalService.onHide.subscribe(async (reason) => {
+      if (reason === 'restart') {
+        await this.restart();
+      }
+      else {
+        this.nextQuestion();
+      }
+    });
 
     this.apiToken = this.authService.getStudentTokenFromStorage();
     this.assessmentService.setApiToken(this.apiToken);
@@ -67,37 +76,10 @@ export class AssessmentComponent implements OnInit {
     this.attemptId = this.utilitiesService.getQueryParam('attemptId');
     this.nonce = this.utilitiesService.getQueryParam('nonce');
 
-    let data;
-
     this.utilitiesService.loadingStarted();
-
-    try {
-      const resp = await this.assessmentService.initAttempt(this.assessmentId, this.preview.toString(), this.attemptId, this.nonce);
-      data = this.utilitiesService.getResponseData(resp);
-    }
-    catch(error) {
-      const serverError = this.utilitiesService.getQuizError(error);
-      const errorMessage = serverError ? serverError : 'Error initializing attempt.';
-      this.showErrorModal(errorMessage);
-      this.utilitiesService.loadingFinished();
-      return;
-    }
-
-    //if student is restarting the QC, we might be receiving a new attempt ID
-    this.attemptId = data.attemptId;
-    this.parseCaliperData(data);
-    this.parseTimeoutData(data);
-
-    //if API token present, this is our first attempt of the session and authentication was valid
-    const apiToken = data.apiToken;
-    if (apiToken) {
-      this.authService.storeStudentToken(apiToken);
-      this.apiToken = apiToken;
-      this.assessmentService.setApiToken(this.apiToken);
-    }
-
-    this.utilitiesService.loadingFinished();
+    await this.initAttempt();
     await this.initQuestions();
+    this.utilitiesService.loadingFinished();
   }
 
   //get the assessment id from the Laravel url, /assessment/{id} and separate from query strings at the end, if necessary;
@@ -135,33 +117,66 @@ export class AssessmentComponent implements OnInit {
     };
   }
 
-  async initQuestions() {
+  async initAttempt() {
     let data;
-    this.utilitiesService.loadingStarted();
 
     try {
-      const resp = await this.assessmentService.getQuestions(this.assessmentId);
+      const resp = await this.assessmentService.initAttempt(this.assessmentId, this.preview.toString(), this.attemptId, this.nonce);
       data = this.utilitiesService.getResponseData(resp);
     }
     catch(error) {
       const serverError = this.utilitiesService.getQuizError(error);
-      const errorMessage = serverError ? serverError : 'Error retrieving questions.';
+      const errorMessage = serverError ? serverError : 'Error initializing attempt.';
       this.showErrorModal(errorMessage);
       this.utilitiesService.loadingFinished();
       return;
     }
 
-    this.assessmentTitle = data.title;
-    this.assessmentDescription = data.description;
-    this.questions = data.questions;
+    //if student is restarting the QC, we might be receiving a new attempt ID
+    this.attemptId = data.attemptId;
+    this.parseCaliperData(data);
+    this.parseTimeoutData(data);
+
+    //if API token present, this is our first attempt of the session and authentication was valid
+    const apiToken = data.apiToken;
+    if (apiToken) {
+      this.authService.storeStudentToken(apiToken);
+      this.apiToken = apiToken;
+      this.assessmentService.setApiToken(this.apiToken);
+    }
+  }
+
+  async initQuestions() {
+    this.currentQuestionIndex = 0;
+
+    if (!this.questions) {
+      let data;
+
+      try {
+        const resp = await this.assessmentService.getQuestions(this.assessmentId);
+        data = this.utilitiesService.getResponseData(resp);
+      }
+      catch(error) {
+        const serverError = this.utilitiesService.getQuizError(error);
+        const errorMessage = serverError ? serverError : 'Error retrieving questions.';
+        this.showErrorModal(errorMessage);
+        this.utilitiesService.loadingFinished();
+        return;
+      }
+
+      this.assessmentTitle = data.title;
+      this.assessmentDescription = data.description;
+      this.questions = data.questions;
+      this.shuffled = (data.shuffled == 'true');
+    }
+
     this.shuffleAnswerOptions();
-    if (data.shuffled == 'true') {
+    if (this.shuffled) {
       this.shuffleQuestions();
     }
     this.pointsPossible = this.questions.length;
     this.currentQuestion = this.questions[this.currentQuestionIndex];
     this.utilitiesService.setTitle('Quick Check');
-    this.utilitiesService.loadingFinished();
   }
 
   isComplete() {
@@ -242,7 +257,7 @@ export class AssessmentComponent implements OnInit {
       attemptId: this.attemptId,
       complete: this.complete,
       pointsPossible: this.pointsPossible,
-      score: this.score
+      score: this.score,
     };
     this.modalService.show(CompletionModalComponent, {initialState, backdrop: 'static', keyboard: false});
     this.modalVisible = true;
@@ -273,6 +288,13 @@ export class AssessmentComponent implements OnInit {
     this.showTimeoutModal(data.timeoutRemaining);
   }
 
+  resetAssessmentVariables() {
+    this.complete = false;
+    this.countCorrect = 0;
+    this.countIncorrect = 0;
+    this.score = 0;
+  }
+
   resetQuestionVariables() {
     this.currentQuestion = null;
     this.studentAnswer = null;
@@ -282,9 +304,14 @@ export class AssessmentComponent implements OnInit {
     this.partialCredit = false;
   }
 
-  restart() {
-    //hard page refresh to ensure a new attempt is created
-    window.location.reload();
+  async restart() {
+    this.utilitiesService.loadingStarted();
+    this.modalVisible = false; //modal's internal function closes itself, can't reference from external source
+    this.resetQuestionVariables();
+    this.resetAssessmentVariables();
+    await this.initAttempt();
+    await this.initQuestions();
+    this.utilitiesService.loadingFinished();
   }
 
   showErrorModal(errorMessage, showRestartBtn = true) {
