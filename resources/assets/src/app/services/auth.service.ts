@@ -138,7 +138,6 @@ export class AuthService {
     }
 
     //after the CAS redirect, LTI context will unfortunately vanish when we do the auth redirects.
-    //(even if we tried to keep it, CAS will strip out query params, if remembering correctly.)
     //all of the other query params needed for auth will no longer be needed after the auth flow
     //completes and local storage is set with the API token. so our redirect url is current url
     //along with the context ID added, if it exists, otherwise add nothing else on.

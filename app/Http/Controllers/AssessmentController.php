@@ -99,7 +99,7 @@ class AssessmentController extends \BaseController
         $assessment = Assessment::findOrFail($assessmentId);
         if ($request->has('attemptId') && $request->has('nonce')) {
             if ($assessment->custom_activity_id) {
-                return $this->redirectToCustomActivity($assessment, $request, );
+                return $this->redirectToCustomActivity($assessment, $request);
             }
 
             return displaySPA();
@@ -346,7 +346,7 @@ class AssessmentController extends \BaseController
 
         $redirectUrl .= ('&attemptId=' . $attemptId);
         if ($nonce) {
-            $redirectUrl .= ('$nonce=' . $nonce);
+            $redirectUrl .= ('&nonce=' . $nonce);
         }
 
         return redirect($redirectUrl);
