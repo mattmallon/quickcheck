@@ -15,7 +15,7 @@ class LTIAdvantage {
     private $jwtBody;
     private $jwtSignature;
     private $oauthHeader;
-    private $oauthTokenEndpoint = 'http://lti-ri.imsglobal.org/platforms/3/access_tokens';
+    private $oauthTokenEndpoint;
     private $publicKey;
     private $request = false;
     public $launchValues;
@@ -90,30 +90,34 @@ class LTIAdvantage {
     }
 
     public function initOauthToken() {
-        $ltiAgs = (array) $this->launchValues['https://www.imsglobal.org/lti/ags'];
+        $ltiAgs = (array) $this->launchValues['https://purl.imsglobal.org/spec/lti-ags/claim/endpoint'];
+        $this->oauthTokenEndpoint = $this->iss . '/login/oauth2/token';
         //send JWT to get oauth token
-        //JTI def:
-        //Unique identifier for the JWT. Can be used to prevent the JWT from being replayed. This is helpful for a one time use token.
         $jwtToken = [
-            "iss" => $this->iss,
-            "aud" => $this->aud,
-            "iat" => $this->launchValues['iat'],
-            "exp" => $this->launchValues['exp'], //TODO: extend expiry time or use launch value?
-            "jti" => uniqid()
+            "iss" => env('LTI_CLIENT_ID'),
+            "sub" => env('LTI_CLIENT_ID'),
+            "aud" => $this->oauthTokenEndpoint,
+            "iat" => time() - 5,
+            "exp" => time() + 60,
+            "jti" => 'lti-service-token' . hash('sha256', random_bytes(64)) //unique identifier to prevent replays
         ];
+
         $privateKey = $this->getRsaKeyFromEnv('LTI_PRIVATE_KEY');
-        $oauthRequestJWT = JWT::encode($jwtToken, $privateKey);
+        $kid = env('LTI_JWK_KID', null);
+        $oauthRequestJWT = JWT::encode($jwtToken, $privateKey, $this->jwtHeader['alg'], $kid);
         $params = [];
         $params['grant_type'] = 'client_credentials';
-        $params['client_assertion_type'] = urlencode('urn:ietf:params:oauth:client-assertion-type:jwt-bearer');
+        $params['client_assertion_type'] = 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer';
         $params['client_assertion'] = $oauthRequestJWT;
         $scope = '';
         foreach($ltiAgs['scope'] as $scopeItem) {
-            $scope .= urlencode($scopeItem . ' ');
+            $scope .= ($scopeItem . ' ');
         }
         $params['scope'] = $scope;
         $jsonResponse = $this->curlPost($this->oauthTokenEndpoint, [], $params);
+        dd($jsonResponse);
         $response = json_decode($jsonResponse, true);
+        dd($response);
         $oauthToken = $response['access_token'];
         $tokenType = $response['token_type'];
         $this->oauthHeader = ['Authorization:' . $tokenType . ' ' . $oauthToken];
