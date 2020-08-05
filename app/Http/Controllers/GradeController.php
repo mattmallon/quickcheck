@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use App\Http\Requests;
 use App\Classes\LTI\Grade;
 use App\Classes\LTI\Outcome;
+use App\Classes\LTI\LtiContext;
 use App\Classes\ExternalData\CanvasAPI as CanvasAPI;
 use App\Models\Attempt;
 use App\Models\Student;
@@ -97,23 +98,36 @@ class GradeController extends \BaseController
         $attemptGraded = false;
         $attemptId = $request->input('attemptId');
         $attempt = Attempt::findOrFail($attemptId);
-        $grade = new Grade($attempt, $request);
+        //$grade = new Grade($attempt, $request);
 
-        if (!$grade->isReadyForGrade()) {
-            $attemptGraded = false;
+        $ltiContext = new LtiContext();
+        //TEMP
+        $lineItemUrl = 'https://iu.test.instructure.com/api/lti/courses/1421440/line_items/113';
+        $student = $attempt->student()->first();
+        $userId = $student->getCanvasUserId();
+        $result = $ltiContext->getResult($lineItemUrl, $userId);
+        $scoreGiven = $attempt->getCalculatedScore();
+
+        if ($scoreGiven > $result) {
+            $ltiContext->submitGrade($lineItemUrl, $userId, $scoreGiven);
         }
-        else if (!$grade->isGradePassbackEnabled()) {
-            $attemptGraded = 'pending';
-        }
-        else {
-            $result = $grade->submitGrade();
-            if ($result !== true) {
-                return response()->error(500, [$result]);
-            }
-            else {
-                $attemptGraded = 'graded';
-            }
-        }
+
+        //TODO: update for LTI advantage specifics
+        // if (!$grade->isReadyForGrade()) {
+        //     $attemptGraded = false;
+        // }
+        // else if (!$grade->isGradePassbackEnabled()) {
+        //     $attemptGraded = 'pending';
+        // }
+        // else {
+        //     $result = $grade->submitGrade();
+        //     if ($result !== true) {
+        //         return response()->error(500, [$result]);
+        //     }
+        //     else {
+        //         $attemptGraded = 'graded';
+        //     }
+        // }
 
         return response()->success(['attemptGraded' => $attemptGraded]);
     }

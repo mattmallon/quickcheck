@@ -83,13 +83,36 @@ class LTIAdvantage {
         //library checks the signature, makes sure it isn't expired, etc.
         $decodedJwt = JWT::decode($rawJwt, $this->publicKey, [$this->jwtHeader['alg']]);
         $this->launchValues = (array) $decodedJwt; //returns object; coerce into array
+        //dd($this->launchValues);
+    }
+
+    public function getExistingLineItem() {
+
     }
 
     public function getLaunchValues() {
         return (array) $this->launchValues;
     }
 
-    public function initOauthToken() {
+    public function getResult($lineItemUrl, $userId) {
+        $this->initOauthToken();
+        if (!$this->oauthHeader) {
+            abort(500, 'Oauth token not set on user.');
+        }
+
+        $resultUrl = $lineItemUrl . '/results?user_id=' . $userId;
+        $jsonResponse = $this->curlGet($resultUrl, $this->oauthHeader);
+        $data = $this->getResponseBody($jsonResponse);
+        $result = $data[0];
+
+        if (array_key_exists('resultScore', $result)) {
+            return $result['resultScore'];
+        }
+
+        return null;
+    }
+
+    public function getOauthTokenFromCanvas() {
         $ltiAgs = (array) $this->launchValues['https://purl.imsglobal.org/spec/lti-ags/claim/endpoint'];
         $this->oauthTokenEndpoint = $this->iss . '/login/oauth2/token';
         //send JWT to get oauth token
@@ -115,43 +138,89 @@ class LTIAdvantage {
         }
         $params['scope'] = $scope;
         $jsonResponse = $this->curlPost($this->oauthTokenEndpoint, [], $params);
-        dd($jsonResponse);
         $response = json_decode($jsonResponse, true);
-        dd($response);
         $oauthToken = $response['access_token'];
-        $tokenType = $response['token_type'];
-        $this->oauthHeader = ['Authorization:' . $tokenType . ' ' . $oauthToken];
+        $this->oauthHeader = ['Authorization: Bearer ' . $oauthToken];
+
+        return $oauthToken;
     }
 
-    public function postScore() {
-        $ltiAgs = (array) $this->launchValues['https://www.imsglobal.org/lti/ags'];
-        $lineItemUrl = $ltiAgs['lineitem'];
-        $lineItemsUrl = $ltiAgs['lineitems'];
+    public function initOauthToken() {
+        $oauthToken = null;
+        //issuer can be canvas prod, beta, or test; we will have the issuer if the oauth token
+        //is being retrieved on an initial LTI launch, but might not have it for later requests.
+        //use the Canvas API domain defined in the env to determine if no direct data.
+        $iss = $this->iss;
+
+        if (!$iss) {
+            $canvasDomain = env('CANVAS_API_DOMAIN', 'https://iu.instructure.com/api/v1');
+            if (strpos($canvasDomain, 'test')) {
+                $iss = 'https://canvas.test.instructure.com';
+            }
+            else if (strpos($canvasDomain, 'beta')) {
+                $iss = 'https://canvas.beta.instructure.com';
+            }
+            else {
+                $iss = 'https://canvas.instructure.com';
+            }
+        }
+
+        $cacheKey = $iss . '-oauth-token';
+
+        //find existing token in cache if possible
+        $oauthToken = Cache::get($cacheKey);
+        if (!$oauthToken) {
+             //otherwise, run the flow to fetch one from Canvas
+            $oauthToken = $this->getOauthTokenFromCanvas();
+            //token ALWAYS expires in an hour and doesn't extend expiration time if used;
+            //replace it a couple minutes shy to prevent failures.
+            Cache::put($cacheKey, $oauthToken, now()->addMinutes(58));
+        }
+
+        $this->setOauthToken($oauthToken);
+        return $oauthToken;
+    }
+
+    public function postScore($lineItemUrl, $userId, $activityProgress, $gradingProgress, $scoreGiven = null) {
+        $this->initOauthToken();
         $currentTime = new DateTime();
         $timestamp = $currentTime->format(DateTime::ATOM); //ISO8601
 
         $sendResultUrl = $lineItemUrl . '/scores';
         $params = [
             "timestamp" => $timestamp,
-            "scoreGiven" => 83,
-            "scoreMaximum" => 100,
-            "comment" => "This is exceptional work.",
-            "activityProgress" => "Completed",
-            "gradingProgress" => "Completed",
-            "userId" => "5323497"
+            "activityProgress" => $activityProgress,
+            "gradingProgress" => $gradingProgress,
+            "userId" => $userId
         ];
 
+        if ($scoreGiven) {
+            $params["scoreGiven"] = $scoreGiven;
+            $params["scoreMaximum"] = 1;
+        }
+
+        if (!$this->oauthHeader) {
+            abort(500, 'Oauth token not set on user.');
+        }
+
         $jsonResponse = $this->curlPost($sendResultUrl, $this->oauthHeader, $params);
-        dd($jsonResponse);
+        $data = $this->getResponseBody($jsonResponse); //currently only returns "resultUrl" which we don't need
+
+        return $data;
     }
 
     public function readScore() {
+        $this->initOauthToken();
         $ltiAgs = (array) $this->launchValues['https://www.imsglobal.org/lti/ags'];
         $lineItemUrl = $ltiAgs['lineitem'];
         $getResultUrl = $lineItemUrl . '/results';
         //get score after posting: currently a 404
         $jsonResponse = $this->curlGet($getResultUrl, $authHeader);
         dd($jsonResponse);
+    }
+
+    public function setOauthToken($oauthToken) {
+        $this->oauthHeader = ['Authorization: Bearer ' . $oauthToken];
     }
 
     public function isLtiAdvantageRequest() {
@@ -169,6 +238,7 @@ class LTIAdvantage {
         $this->validateStateAndNonce();
         $this->validateRegistration();
         $this->validateMessage();
+        $this->initOauthToken();
     }
 
     private function getPublicKey() {
@@ -233,6 +303,21 @@ class LTIAdvantage {
         $result = curl_exec($ch);
         curl_close($ch);
         return $result;
+    }
+
+    private function getResponseBody($jsonResponse)
+    {
+        if (!$jsonResponse) {
+            abort(500, 'Error retrieving data from Canvas.');
+        }
+
+        $body = null;
+        $splitArray = explode("\r\n\r\n", $jsonResponse, 2); //assigns header and body to the right portions of the response
+        $body = $splitArray[1];
+
+        $responseBody = json_decode($body, true);
+
+        return $responseBody;
     }
 
     private function getRsaKeyFromEnv($envVar) {

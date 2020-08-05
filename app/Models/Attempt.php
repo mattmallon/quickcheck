@@ -785,6 +785,10 @@ class Attempt extends Eloquent {
         $this->due_at = $ltiContext->getDueAt();
         $this->resource_link_id = $ltiContext->getResourceLinkId();
         $this->nonce = $ltiContext->getNonce();
+
+        //TODO: add associated line item in separate table and foreign key here
+        //TODO: if an instructor, designer, etc. from LTI context, then leave value NULL,
+        //as it will error out if we try to start a submission for a non-student.
         $this->save();
 
         return $this;

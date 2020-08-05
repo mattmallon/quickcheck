@@ -2,7 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use App\Classes\LTI\BLTI;
+use App\Classes\LTI\LtiContext;
 use App\Classes\ExternalData\CanvasAPI;
 use App\Classes\ExternalData\CSV;
 use App\Models\Assessment;
@@ -307,6 +307,21 @@ class AttemptController extends \BaseController
 
         $caliperData = $attempt->getCaliperData();
         $timeoutRemaining = $attempt->getTimeoutRemaining($assessment_id, $student->id);
+
+        //start submission
+        //TODO: grab line item url from attempt row in DB, or maybe a linked DB row? hard-coding for now.
+        //TODO: if no line item, ungraded, do nothing; put this in an if block
+        //TODO: eventually will need to create a line item if needed and not in the launch data;
+        //TODO: for module item, do we start creating line items there as well? Or can we/do we differentiate?
+        $lineItemUrl = 'https://iu.test.instructure.com/api/lti/courses/1421440/line_items/113'; //1st course
+        //$lineItemUrl = 'https://iu.test.instructure.com/api/lti/courses/1714857/line_items/112'; //2nd course
+        $canvasUserId = $student->getCanvasUserId();
+        $ltiContext = new LtiContext();
+        $currentScore = $ltiContext->getResult($lineItemUrl, $canvasUserId);
+        //student has one submission in Canvas, which is overwritten if we send new data
+        if (!$currentScore) {
+            $ltiContext->startSubmission($lineItemUrl, $canvasUserId);
+        }
 
         $data = [
             'apiToken' => $apiToken,
