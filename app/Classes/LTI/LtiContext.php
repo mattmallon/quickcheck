@@ -14,6 +14,7 @@ class LtiContext {
 
     private $contextKey = "https://purl.imsglobal.org/spec/lti/claim/context";
     private $customKey = "https://purl.imsglobal.org/spec/lti/claim/custom";
+    private $endpointKey = "https://purl.imsglobal.org/spec/lti-ags/claim/endpoint";
     private $lisKey = "https://purl.imsglobal.org/spec/lti/claim/lis";
     private $namesRolesServiceKey = "https://purl.imsglobal.org/spec/lti-nrps/claim/namesroleservice";
     private $resourceLinkKey = "https://purl.imsglobal.org/spec/lti/claim/resource_link";
@@ -24,6 +25,13 @@ class LtiContext {
     /************************************************************************/
     /* PUBLIC FUNCTIONS *****************************************************/
     /************************************************************************/
+
+    public function getAllLineItems($lineItemsUrl)
+    {
+        $lti = new LTIAdvantage();
+        $result = $lti->getAllLineItems($lineItemsUrl);
+        return $result;
+    }
 
     public function getAssignmentId()
     {
@@ -162,6 +170,28 @@ class LtiContext {
     public function getLaunchValues()
     {
         return $this->launchValues;
+    }
+
+    public function getLineItem($lineItemUrl)
+    {
+        $lti = new LTIAdvantage();
+        $data = $lti->getLineItem($lineItemUrl);
+
+        return $data;
+    }
+
+    public function getLineItemUrl()
+    {
+        if (!$this->launchValues) {
+            return false;
+        }
+
+        $urls = $this->launchValues[$this->endpointKey];
+        if (!property_exists($urls, 'lineitem')) {
+            return false;
+        }
+
+        return $urls->lineitem;
     }
 
     /**

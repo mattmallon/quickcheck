@@ -98,21 +98,30 @@ class GradeController extends \BaseController
         $attemptGraded = false;
         $attemptId = $request->input('attemptId');
         $attempt = Attempt::findOrFail($attemptId);
-        //$grade = new Grade($attempt, $request);
+        $lineItem = $attempt->lineItem;
 
-        $ltiContext = new LtiContext();
-        //TEMP
-        $lineItemUrl = 'https://iu.test.instructure.com/api/lti/courses/1421440/line_items/113';
-        $student = $attempt->student()->first();
-        $userId = $student->getCanvasUserId();
-        $result = $ltiContext->getResult($lineItemUrl, $userId);
-        $scoreGiven = $attempt->getCalculatedScore();
-
-        if ($scoreGiven > $result) {
-            $ltiContext->submitGrade($lineItemUrl, $userId, $scoreGiven);
+        if (!$lineItem) {
+            $attemptGraded = false;
+        }
+        else {
+            $lineItemUrl = $lineItem->getUrl();
+            $ltiContext = new LtiContext();
+            $student = $attempt->student()->first();
+            $userId = $student->getCanvasUserId();
+            $result = $ltiContext->getResult($lineItemUrl, $userId);
+            if (!$result) { //if no submission yet and NULL, then convert to numeric value of 0
+                $result = 0;
+            }
+            $scoreGiven = $attempt->getCalculatedScore();
+            if ($scoreGiven > $result) {
+                $ltiContext->submitGrade($lineItemUrl, $userId, $scoreGiven);
+            }
+            $result = $ltiContext->getResult($lineItemUrl, $userId);
+            $attemptGraded = 'graded';
         }
 
         //TODO: update for LTI advantage specifics
+        //$grade = new Grade($attempt, $request);
         // if (!$grade->isReadyForGrade()) {
         //     $attemptGraded = false;
         // }

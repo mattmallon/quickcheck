@@ -9,6 +9,7 @@ use App\Classes\LTI\Outcome;
 use App\Classes\LTI\Grade;
 use App\Models\CollectionFeature;
 use App\Models\CourseContext;
+use App\Models\LinteItem;
 use App\Models\Student;
 use App\Classes\LTI\LtiContext;
 use App\Exceptions\MissingLtiContextException;
@@ -19,6 +20,7 @@ class Attempt extends Eloquent {
     protected $fillable = ['assessment_id',
                             'course_context_id',
                             'student_id',
+                            'line_item_id',
                             'lti_custom_assignment_id',
                             'lti_custom_section_id',
                             'lis_outcome_service_url',
@@ -59,6 +61,10 @@ class Attempt extends Eloquent {
 
     public function studentResponses() {
         return $this->hasMany('App\Models\StudentResponse');
+    }
+
+    public function lineItem() {
+        return $this->belongsTo('App\Models\LineItem');
     }
 
     /************************************************************************/
@@ -143,6 +149,16 @@ class Attempt extends Eloquent {
 
     public function getAssignmentId() {
         return $this->lti_custom_assignment_id;
+    }
+
+    /**
+    * Get an attempt's line item ID (ID internal to Quick Check)
+    *
+    * @return int
+    */
+
+    public function getLineItemId() {
+        return $this->line_item_id;
     }
 
     /**
@@ -782,13 +798,24 @@ class Attempt extends Eloquent {
         //$attempt->lis_result_sourcedid = ; //TODO: needed? something else? keep in DB as NULL for historical data
         $this->last_milestone = $this->MILESTONE_CREATED;
         $this->assignment_title = $ltiContext->getAssignmentTitle();
-        $this->due_at = $ltiContext->getDueAt();
+        //$this->due_at = $ltiContext->getDueAt();
         $this->resource_link_id = $ltiContext->getResourceLinkId();
         $this->nonce = $ltiContext->getNonce();
 
-        //TODO: add associated line item in separate table and foreign key here
-        //TODO: if an instructor, designer, etc. from LTI context, then leave value NULL,
+        //if an instructor, designer, etc. from LTI context, then leave line item value NULL,
         //as it will error out if we try to start a submission for a non-student.
+        $lineItemUrl = $ltiContext->getLineItemUrl();
+        if (!$ltiContext->isInstructor() && $lineItemUrl) {
+            $lineItem = LineItem::findByUrl($lineItemUrl);
+            if (!$lineItem) {
+                $lineItem = new LineItem();
+                $dueAt = $ltiContext->getDueAt();
+                $lineItem->initialize($lineItemUrl, $dueAt);
+            }
+
+            $this->line_item_id = $lineItem->id;
+        }
+
         $this->save();
 
         return $this;

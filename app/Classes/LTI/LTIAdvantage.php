@@ -86,12 +86,34 @@ class LTIAdvantage {
         //dd($this->launchValues);
     }
 
-    public function getExistingLineItem() {
+    public function getAllLineItems($lineItemsUrl)
+    {
+        $this->initOauthToken();
+        if (!$this->oauthHeader) {
+            abort(500, 'Oauth token not set on user.');
+        }
 
+        $jsonResponse = $this->curlGet($lineItemsUrl, $this->oauthHeader);
+        $data = $this->getResponseBody($jsonResponse);
+
+        return $data;
     }
 
     public function getLaunchValues() {
         return (array) $this->launchValues;
+    }
+
+    public function getLineItem($lineItemUrl)
+    {
+        $this->initOauthToken();
+        if (!$this->oauthHeader) {
+            abort(500, 'Oauth token not set on user.');
+        }
+
+        $jsonResponse = $this->curlGet($lineItemUrl, $this->oauthHeader);
+        $data = $this->getResponseBody($jsonResponse);
+
+        return $data;
     }
 
     public function getResult($lineItemUrl, $userId) {
@@ -103,6 +125,9 @@ class LTIAdvantage {
         $resultUrl = $lineItemUrl . '/results?user_id=' . $userId;
         $jsonResponse = $this->curlGet($resultUrl, $this->oauthHeader);
         $data = $this->getResponseBody($jsonResponse);
+        if (!$data) {
+            return null;
+        }
         $result = $data[0];
 
         if (array_key_exists('resultScore', $result)) {
@@ -204,7 +229,7 @@ class LTIAdvantage {
         }
 
         $jsonResponse = $this->curlPost($sendResultUrl, $this->oauthHeader, $params);
-        $data = $this->getResponseBody($jsonResponse); //currently only returns "resultUrl" which we don't need
+        $data = json_decode($jsonResponse, true); //currently only returns "resultUrl" which we don't need
 
         return $data;
     }
@@ -313,6 +338,9 @@ class LTIAdvantage {
 
         $body = null;
         $splitArray = explode("\r\n\r\n", $jsonResponse, 2); //assigns header and body to the right portions of the response
+        if (!array_key_exists(1, $splitArray)) {
+            abort(500, 'No response returned from Canvas.');
+        }
         $body = $splitArray[1];
 
         $responseBody = json_decode($body, true);
