@@ -8,6 +8,7 @@ use \Firebase\JWT\JWK;
 use DateTime;
 use Illuminate\Support\Facades\Cache;
 use App\Exceptions\GradePassbackException;
+use App\Classes\LTI\LtiConfig;
 
 class LTIAdvantage {
     private $aud;
@@ -125,7 +126,7 @@ class LTIAdvantage {
         $this->publicKey = $this->getPublicKey();
 
         //library checks the signature, makes sure it isn't expired, etc.
-        $decodedJwt = JWT::decode($rawJwt, $this->publicKey, [$this->jwtHeader['alg']]);
+        $decodedJwt = JWT::decode($rawJwt, $this->publicKey, ['RS256']);
         $this->launchValues = (array) $decodedJwt; //returns object; coerce into array
         //dd($this->launchValues);
     }
@@ -141,6 +142,26 @@ class LTIAdvantage {
         $data = $this->getResponseBody($jsonResponse);
 
         return $data;
+    }
+
+    public function getIssuer()
+    {
+        $iss = $this->iss;
+
+        if (!$iss) {
+            $canvasDomain = env('CANVAS_API_DOMAIN', 'https://iu.instructure.com/api/v1');
+            if (strpos($canvasDomain, 'test')) {
+                $iss = 'https://canvas.test.instructure.com';
+            }
+            else if (strpos($canvasDomain, 'beta')) {
+                $iss = 'https://canvas.beta.instructure.com';
+            }
+            else {
+                $iss = 'https://canvas.instructure.com';
+            }
+        }
+
+        return $iss;
     }
 
     public function getLaunchValues() {
@@ -181,36 +202,32 @@ class LTIAdvantage {
         $score = null;
 
         if (array_key_exists('resultScore', $result)) {
-            $resultScore = $result['resultScore'];
+            //$resultScore = $result['resultScore'];
+            return $result['resultScore'];
         }
 
-        if (array_key_exists('resultMaximum', $result)) {
-            $resultMaximum = $result['resultMaximum'];
-        }
+        // if (array_key_exists('resultMaximum', $result)) {
+        //     $resultMaximum = $result['resultMaximum'];
+        // }
 
-        //use isset instead of boolean because a score of 0 would equate to false
-        if (isset($resultScore) && isset($resultMaximum)) {
-            //just in case the point value is 0, want to prevent division by 0 error
-            if ($resultMaximum === 0) {
-                return 0;
-            }
+        // //use isset instead of boolean because a score of 0 would equate to false
+        // if (isset($resultScore) && isset($resultMaximum)) {
+        //     //just in case the point value is 0, want to prevent division by 0 error
+        //     if ($resultMaximum === 0) {
+        //         return 0;
+        //     }
 
-            $score = $resultScore / $resultMaximum;
-            // echo 'here';
-            // echo '\n\n';
-            // echo $resultScore;
-            // echo '\n\n';
-            // echo $resultMaximum;
-            // die();
-            //dd($resultScore);
-            //dd($resultMaximum);
-        }
+        //     $score = $resultScore / $resultMaximum;
+        // }
 
-        return $score;
+        // return $score;
+
+        return null;
     }
 
     public function getOauthTokenFromCanvas() {
-        $ltiAgs = (array) $this->launchValues['https://purl.imsglobal.org/spec/lti-ags/claim/endpoint'];
+        //$ltiAgs = (array) $this->launchValues['https://purl.imsglobal.org/spec/lti-ags/claim/endpoint'];
+        $this->iss = $this->getIssuer();
         $this->oauthTokenEndpoint = $this->iss . '/login/oauth2/token';
         //send JWT to get oauth token
         $jwtToken = [
@@ -224,13 +241,17 @@ class LTIAdvantage {
 
         $privateKey = $this->getRsaKeyFromEnv('LTI_PRIVATE_KEY');
         $kid = env('LTI_JWK_KID', null);
-        $oauthRequestJWT = JWT::encode($jwtToken, $privateKey, $this->jwtHeader['alg'], $kid);
+        $oauthRequestJWT = JWT::encode($jwtToken, $privateKey, 'RS256', $kid);
         $params = [];
         $params['grant_type'] = 'client_credentials';
         $params['client_assertion_type'] = 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer';
         $params['client_assertion'] = $oauthRequestJWT;
+        $ltiConfig = new LtiConfig();
+        //retrieve from config instead of launch in case oauth token needs refreshing and we no longer
+        //have launch data available.
+        $scopes = $ltiConfig->getScopes();
         $scope = '';
-        foreach($ltiAgs['scope'] as $scopeItem) {
+        foreach($scopes as $scopeItem) {
             $scope .= ($scopeItem . ' ');
         }
         $params['scope'] = $scope;
@@ -247,21 +268,7 @@ class LTIAdvantage {
         //issuer can be canvas prod, beta, or test; we will have the issuer if the oauth token
         //is being retrieved on an initial LTI launch, but might not have it for later requests.
         //use the Canvas API domain defined in the env to determine if no direct data.
-        $iss = $this->iss;
-
-        if (!$iss) {
-            $canvasDomain = env('CANVAS_API_DOMAIN', 'https://iu.instructure.com/api/v1');
-            if (strpos($canvasDomain, 'test')) {
-                $iss = 'https://canvas.test.instructure.com';
-            }
-            else if (strpos($canvasDomain, 'beta')) {
-                $iss = 'https://canvas.beta.instructure.com';
-            }
-            else {
-                $iss = 'https://canvas.instructure.com';
-            }
-        }
-
+        $iss = $this->getIssuer();
         $cacheKey = $iss . '-oauth-token';
 
         //find existing token in cache if possible
@@ -305,14 +312,6 @@ class LTIAdvantage {
         $this->checkForGradeErrors($data);
 
         return $data;
-    }
-
-    public function readScore() {
-        $this->initOauthToken();
-        $ltiAgs = (array) $this->launchValues['https://www.imsglobal.org/lti/ags'];
-        $lineItemUrl = $ltiAgs['lineitem'];
-        $getResultUrl = $lineItemUrl . '/results';
-        $jsonResponse = $this->curlGet($getResultUrl, $authHeader);
     }
 
     public function setOauthToken($oauthToken) {

@@ -94,7 +94,6 @@ class Grade {
         }
         $scoreGiven = $this->attempt->getCalculatedScore();
         $gradeToSubmit = $this->formatGradeToSubmit($scoreGiven, $scoreMaximum);
-        //dd($gradeToSubmit);
         if ($gradeToSubmit <= $result) {
             return true;
         }

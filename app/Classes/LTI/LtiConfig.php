@@ -34,6 +34,13 @@ class LtiConfig {
         $this->iconUrl = "https://toolfinder.eds.iu.edu/storage/thumbnails/whg61rklT43ZvK3T4rZZ70reFfX8djh3akfSkkot.png";
         $this->selectionWidth = 550;
         $this->selectionHeight = 750;
+        $this->scopes = [
+            "https://purl.imsglobal.org/spec/lti-ags/scope/lineitem",
+            "https://purl.imsglobal.org/spec/lti-ags/scope/result.readonly",
+            "https://purl.imsglobal.org/spec/lti-ags/scope/score",
+            "https://purl.imsglobal.org/spec/lti-nrps/scope/contextmembership.readonly",
+            "https://purl.imsglobal.org/spec/lti-ags/scope/lineitem.readonly"
+        ];
     }
 
     /**
@@ -46,13 +53,7 @@ class LtiConfig {
     {
         return [
             "title" => $this->titleText,
-            "scopes" => [
-                "https://purl.imsglobal.org/spec/lti-ags/scope/lineitem",
-                "https://purl.imsglobal.org/spec/lti-ags/scope/result.readonly",
-                "https://purl.imsglobal.org/spec/lti-ags/scope/score",
-                "https://purl.imsglobal.org/spec/lti-nrps/scope/contextmembership.readonly",
-                "https://purl.imsglobal.org/spec/lti-ags/scope/lineitem.readonly"
-            ],
+            "scopes" => $this->scopes,
             "privacy_level" => "public",
             "extensions" => [
                 [
@@ -130,5 +131,16 @@ class LtiConfig {
             "target_link_uri" => $this->launchUrl,
             "oidc_initiation_url" => $this->oidcUrl
         ];
+    }
+
+    /**
+    * Return array of scopes in config, in case launch data is unavailable
+    *
+    * @return []
+    */
+
+    public function getScopes()
+    {
+        return $this->scopes;
     }
 }
