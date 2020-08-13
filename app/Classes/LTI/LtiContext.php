@@ -225,6 +225,15 @@ class LtiContext {
         return $this->launchValues[$this->lisKey]->person_sourcedid;
     }
 
+    public function getPointsPossible()
+    {
+        if (!$this->launchValues) {
+            return false;
+        }
+
+        return $this->launchValues[$this->customKey]->canvas_assignment_pointspossible;
+    }
+
     /**
     * Get the resource link ID for the current launch
     *
@@ -370,21 +379,20 @@ class LtiContext {
 
     public function startSubmission($lineItemUrl, $userId)
     {
-        //TODO: need to figure out if the user is an instructor or test student or do a try/catch here; as the following error is
-        //given if so:
-        //{"errors":{"type":"unprocessable_entity","message":"User not found in course or is not a student"}}
         $lti = new LTIAdvantage();
         $activityProgress = 'Started';
         $gradingProgress = 'NotReady';
         $lti->postScore($lineItemUrl, $userId, $activityProgress, $gradingProgress);
     }
 
-    public function submitGrade($lineItemUrl, $userId, $scoreGiven)
+    public function submitGrade($lineItemUrl, $userId, $scoreGiven, $scoreMaximum)
     {
         $lti = new LTIAdvantage();
         $activityProgress = 'Completed';
         $gradingProgress = 'FullyGraded';
-        $lti->postScore($lineItemUrl, $userId, $activityProgress, $gradingProgress, $scoreGiven);
+        $result = $lti->postScore($lineItemUrl, $userId, $activityProgress, $gradingProgress, $scoreGiven, $scoreMaximum);
+
+        return $result;
     }
 
     /**

@@ -7,6 +7,7 @@ use \Firebase\JWT\JWT;
 use \Firebase\JWT\JWK;
 use DateTime;
 use Illuminate\Support\Facades\Cache;
+use App\Exceptions\GradePassbackException;
 
 class LTIAdvantage {
     private $aud;
@@ -61,6 +62,49 @@ class LTIAdvantage {
 
         return $redirectUrl;
     }
+
+    /**
+    * Determine if response in grade read/passback is due to error
+    *
+    * @param  string $response
+    * @return void
+    */
+
+    private function checkForGradeErrors($data = null)
+    {
+        $unresponsiveErrorMessage = 'The Canvas gradebook is currently unresponsive. Please try again later.';
+
+        if (!$data) {
+            throw new GradePassbackException($unresponsiveErrorMessage);
+        }
+
+        if (!array_key_exists('errors', $data)) {
+            return;
+        }
+
+        $errors = $data['errors'];
+
+        foreach ($errors as $error) {
+            if ($this->isCanvasDown($error)) {
+                throw new GradePassbackException($unresponsiveErrorMessage);
+            }
+
+            if ($this->isUserNotInCourse($error)) {
+                $errorMessage = 'Canvas indicates that you are no longer enrolled in this course and cannot receive a grade.';
+                throw new GradePassbackException($errorMessage);
+            }
+
+            if ($this->isAssignmentInvalid($error)) {
+                $errorMessage = 'Canvas indicates that this assignment is invalid. It may have been closed, deleted, or unpublished after the quick check was opened.';
+                throw new GradePassbackException($errorMessage);
+            }
+        }
+
+        //if we have errors but not for a reason specified above...
+        $errorMessage = 'Gradebook transaction unsuccessful.';
+        throw new GradePassbackException($errorMessage);
+    }
+
 
     public function decodeLaunchJwt() {
         $rawJwt = $this->request->get('id_token');
@@ -125,16 +169,44 @@ class LTIAdvantage {
         $resultUrl = $lineItemUrl . '/results?user_id=' . $userId;
         $jsonResponse = $this->curlGet($resultUrl, $this->oauthHeader);
         $data = $this->getResponseBody($jsonResponse);
+        $this->checkForGradeErrors($data);
+
         if (!$data) {
             return null;
         }
+
         $result = $data[0];
+        $resultScore = null;
+        $resultMaximum = null;
+        $score = null;
 
         if (array_key_exists('resultScore', $result)) {
-            return $result['resultScore'];
+            $resultScore = $result['resultScore'];
         }
 
-        return null;
+        if (array_key_exists('resultMaximum', $result)) {
+            $resultMaximum = $result['resultMaximum'];
+        }
+
+        //use isset instead of boolean because a score of 0 would equate to false
+        if (isset($resultScore) && isset($resultMaximum)) {
+            //just in case the point value is 0, want to prevent division by 0 error
+            if ($resultMaximum === 0) {
+                return 0;
+            }
+
+            $score = $resultScore / $resultMaximum;
+            // echo 'here';
+            // echo '\n\n';
+            // echo $resultScore;
+            // echo '\n\n';
+            // echo $resultMaximum;
+            // die();
+            //dd($resultScore);
+            //dd($resultMaximum);
+        }
+
+        return $score;
     }
 
     public function getOauthTokenFromCanvas() {
@@ -206,7 +278,7 @@ class LTIAdvantage {
         return $oauthToken;
     }
 
-    public function postScore($lineItemUrl, $userId, $activityProgress, $gradingProgress, $scoreGiven = null) {
+    public function postScore($lineItemUrl, $userId, $activityProgress, $gradingProgress, $scoreGiven = null, $scoreMaximum = 1) {
         $this->initOauthToken();
         $currentTime = new DateTime();
         $timestamp = $currentTime->format(DateTime::ATOM); //ISO8601
@@ -221,7 +293,7 @@ class LTIAdvantage {
 
         if ($scoreGiven) {
             $params["scoreGiven"] = $scoreGiven;
-            $params["scoreMaximum"] = 1;
+            $params["scoreMaximum"] = $scoreMaximum;
         }
 
         if (!$this->oauthHeader) {
@@ -230,6 +302,7 @@ class LTIAdvantage {
 
         $jsonResponse = $this->curlPost($sendResultUrl, $this->oauthHeader, $params);
         $data = json_decode($jsonResponse, true); //currently only returns "resultUrl" which we don't need
+        $this->checkForGradeErrors($data);
 
         return $data;
     }
@@ -239,9 +312,7 @@ class LTIAdvantage {
         $ltiAgs = (array) $this->launchValues['https://www.imsglobal.org/lti/ags'];
         $lineItemUrl = $ltiAgs['lineitem'];
         $getResultUrl = $lineItemUrl . '/results';
-        //get score after posting: currently a 404
         $jsonResponse = $this->curlGet($getResultUrl, $authHeader);
-        dd($jsonResponse);
     }
 
     public function setOauthToken($oauthToken) {
@@ -359,6 +430,57 @@ class LTIAdvantage {
         $parsedValue = str_replace('\n', '', $initialValue);
         //dd($parsedValue);
         return $parsedValue;
+    }
+
+    /**
+    * Determine if response in grade read/passback is due to invalid assignment,
+    * which doesn't require error logging
+    *
+    * @param  string $response
+    * @return boolean
+    */
+
+    private function isAssignmentInvalid($response)
+    {
+        $message = 'Assignment is invalid';
+        if (strpos($response, $message) !== false) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+    * Determine if grade read/passback error is due to unresponsive LMS,
+    * which doesn't require error logging
+    *
+    * @param  string $response
+    * @return boolean
+    */
+    private function isCanvasDown($response)
+    {
+        if (strpos($response, 'Gateway Time-out')) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+    * Determine if response in grade read/passback is due to user not in course,
+    * which doesn't require error logging
+    *
+    * @param  string $response
+    * @return boolean
+    */
+    private function isUserNotInCourse($response)
+    {
+        $message = 'User is no longer in course';
+        if (strpos($response, $message) !== false) {
+            return true;
+        }
+
+        return false;
     }
 
     private function validateMessage()

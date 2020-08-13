@@ -9,7 +9,8 @@ class LineItem extends Eloquent {
     protected $fillable = [
         'line_item_url',
         'label',
-        'due_at'
+        'due_at',
+        'score_maximum'
     ];
 
     public function attempts() {
@@ -21,7 +22,17 @@ class LineItem extends Eloquent {
         return LineItem::where('line_item_url', $lineItemUrl)->first();
     }
 
-    public function geturl()
+    public function getDueAt()
+    {
+        return $this->due_at;
+    }
+
+    public function getScoreMaximum()
+    {
+        return $this->score_maximum;
+    }
+
+    public function getUrl()
     {
         return $this->line_item_url;
     }
@@ -36,7 +47,24 @@ class LineItem extends Eloquent {
 
         $this->line_item_url = $lineItem['id'];
         $this->label = $lineItem['label'];
+        $this->score_maximum = intval($lineItem['scoreMaximum']);
         $this->due_at = $dueAt;
+        $this->save();
+
+        return $this;
+    }
+
+    public function setDueAt($dueAt)
+    {
+        $this->due_at = $dueAt;
+        $this->save();
+
+        return $this;
+    }
+
+    public function setScoreMaximum($scoreMaximum)
+    {
+        $this->score_maximum = $scoreMaximum;
         $this->save();
 
         return $this;

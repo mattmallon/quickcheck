@@ -212,12 +212,19 @@ class Attempt extends Eloquent {
     */
 
     public function getDueAt($convertToDateTime = false) {
-        if ($convertToDateTime && $this->due_at) { //don't convert a null value
+        $lineItem = $this->lineItem;
+        if (!$lineItem) {
+            return null;
+        }
+
+        $dueAt = $lineItem->getDueAt();
+
+        if ($convertToDateTime && $dueAt) { //don't convert a null value
             //convert due_at from datetime to timestamp
             return new DateTime($this->due_at);
         }
 
-        return $this->due_at;
+        return $dueAt;
     }
 
     /**
@@ -538,7 +545,7 @@ class Attempt extends Eloquent {
     */
 
     public function isTiedToGradebook() {
-        if ($this->lis_result_sourcedid) {
+        if ($this->lineItem) {
             return true;
         }
 
@@ -807,10 +814,20 @@ class Attempt extends Eloquent {
         $lineItemUrl = $ltiContext->getLineItemUrl();
         if (!$ltiContext->isInstructor() && $lineItemUrl) {
             $lineItem = LineItem::findByUrl($lineItemUrl);
+            $dueAt = $ltiContext->getDueAt();
+            $pointsPossible = $ltiContext->getPointsPossible();
+
             if (!$lineItem) {
                 $lineItem = new LineItem();
-                $dueAt = $ltiContext->getDueAt();
                 $lineItem->initialize($lineItemUrl, $dueAt);
+            }
+
+            if ($lineItem->getDueAt() != $dueAt) { //update if instructor changed due date
+                $lineItem->setDueAt($dueAt);
+            }
+
+            if ($lineItem->getScoreMaximum() != $pointsPossible) { //update if instructor changed score
+                $lineItem->setScoreMaximum($pointsPossible);
             }
 
             $this->line_item_id = $lineItem->id;
