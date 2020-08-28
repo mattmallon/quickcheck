@@ -140,9 +140,9 @@ class AttemptController extends \BaseController
         }
 
         $courseContext = CourseContext::where('lti_context_id', '=', $context_id)->first();
-        $attempts = Attempt::with('assessment')
+        $attempts = Attempt::with(['assessment', 'lineItem'])
                 ->where('course_context_id', '=', $courseContext->id)
-                ->groupBy('assessment_id', 'lti_custom_assignment_id') //if embedded in multiple assignments, separate out
+                ->groupBy('assessment_id', 'line_item_id') //if embedded in multiple assignments, separate out
                 ->get();
 
         //not possible to sort by eager loaded relationship in Laravel without a join;

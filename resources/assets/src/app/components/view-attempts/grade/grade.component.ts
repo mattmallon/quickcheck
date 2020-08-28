@@ -80,7 +80,7 @@ export class GradeComponent implements OnInit {
 		}
 
 		//grades are displayed as 0-100 for instructor, but passed to back-end on a 0-1 scale
-		var gradeData = { 'sourcedId': this.attempt.lis_result_sourcedid, 'grade': (this.editedGradeValue / 100).toString() };
+		var gradeData = { 'lineItemId': this.attempt.line_item_id, 'grade': (this.editedGradeValue / 100).toString() };
 		this.gradeLoading = true;
 
 		try {

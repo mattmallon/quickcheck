@@ -10,7 +10,8 @@ class LineItem extends Eloquent {
         'line_item_url',
         'label',
         'due_at',
-        'score_maximum'
+        'score_maximum',
+        'lti_custom_assignment_id'
     ];
 
     public function attempts() {
@@ -20,6 +21,11 @@ class LineItem extends Eloquent {
     public static function findByUrl($lineItemUrl)
     {
         return LineItem::where('line_item_url', $lineItemUrl)->first();
+    }
+
+    public function getAssignmentId()
+    {
+        return $this->lti_custom_assignment_id;
     }
 
     public function getDueAt()
@@ -37,7 +43,7 @@ class LineItem extends Eloquent {
         return $this->line_item_url;
     }
 
-    public function initialize($lineItemUrl, $dueAt)
+    public function initialize($lineItemUrl, $dueAt = null, $assignmentId = null)
     {
         $ltiContext = new LtiContext();
         $lineItem = $ltiContext->getLineItem($lineItemUrl);
@@ -49,6 +55,7 @@ class LineItem extends Eloquent {
         $this->label = $lineItem['label'];
         $this->score_maximum = intval($lineItem['scoreMaximum']);
         $this->due_at = $dueAt;
+        $this->lti_custom_assignment_id = $assignmentId;
         $this->save();
 
         return $this;

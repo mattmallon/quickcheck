@@ -55,7 +55,7 @@ export class AttemptsOverviewComponent implements OnInit {
     //if assessment is embedded in multiple assignments (or assignment + module item), separate results view for each
     for (let attempt of data.attempts) {
       const assessmentId = attempt.assessment_id.toString();
-      let assignmentId = attempt.lti_custom_assignment_id; //note: may be NULL if a module item
+      let assignmentId = this.getAssignmentId(attempt); //note: may be NULL if a module item or LTI 1.1 historic attempt
 
       let embeds = this.embeds[assessmentId];
       if (!embeds) {
@@ -70,6 +70,14 @@ export class AttemptsOverviewComponent implements OnInit {
     //each attempt comes with the unique assessment, for us to put onto the page
     this.attempts = data.attempts;
     this.utilitiesService.loadingFinished();
+  }
+
+  getAssignmentId(attempt) {
+    if (!attempt.line_item) {
+      return null;
+    }
+
+    return attempt.line_item.lti_custom_assignment_id;
   }
 
   getDuplicateEmbedName(attempt) {

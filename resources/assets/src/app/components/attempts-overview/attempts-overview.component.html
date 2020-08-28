@@ -58,7 +58,7 @@
                     <ng-container *ngFor="let attempt of this.attempts">
                         <!-- if assessment deleted, then don't include, otherwise will throw errors -->
                         <ng-container *ngIf="attempt.assessment">
-                            <a target="_self" [routerLink]="'/assessment/' + attempt.assessment_id + '/attempts/' + (attempt.lti_custom_assignment_id ? attempt.lti_custom_assignment_id : '')" queryParamsHandling="preserve" class="list-group-item list-group-item-action qc-attempt-overview-assessment" *ngIf="!this.isSubstringNotFound(attempt.assessment.name, this.search.assessmentName)">{{ attempt.assessment.name }} {{ this.getDuplicateEmbedName(attempt) }}</a>
+                            <a target="_self" [routerLink]="'/assessment/' + attempt.assessment_id + '/attempts/' + (this.getAssignmentId(attempt) ? this.getAssignmentId(attempt) : '')" queryParamsHandling="preserve" class="list-group-item list-group-item-action qc-attempt-overview-assessment" *ngIf="!this.isSubstringNotFound(attempt.assessment.name, this.search.assessmentName)">{{ attempt.assessment.name }} {{ this.getDuplicateEmbedName(attempt) }}</a>
                         </ng-container>
                     </ng-container>
                 </div>

@@ -5,11 +5,9 @@ use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Http\Request;
 use App\Classes\ExternalData\CanvasAPI;
 use App\Classes\ExternalData\Caliper;
-use App\Classes\LTI\Outcome;
-use App\Classes\LTI\Grade;
 use App\Models\CollectionFeature;
 use App\Models\CourseContext;
-use App\Models\LinteItem;
+use App\Models\LineItem;
 use App\Models\Student;
 use App\Classes\LTI\LtiContext;
 use App\Exceptions\MissingLtiContextException;
@@ -21,10 +19,7 @@ class Attempt extends Eloquent {
                             'course_context_id',
                             'student_id',
                             'line_item_id',
-                            'lti_custom_assignment_id',
                             'lti_custom_section_id',
-                            'lis_outcome_service_url',
-                            'lis_result_sourcedid',
                             'last_milestone',
                             'count_correct',
                             'count_incorrect',
@@ -117,8 +112,6 @@ class Attempt extends Eloquent {
             $removeKeys = [
                 'assessment',
                 'course_context_id',
-                'lis_outcome_service_url',
-                'lis_result_sourcedid',
                 'student',
                 'student_responses',
                 'student_id'
@@ -212,7 +205,7 @@ class Attempt extends Eloquent {
     */
 
     public function getDueAt($convertToDateTime = false) {
-        $lineItem = $this->lineItem;
+        $lineItem = $this->lineItem()->first();
         if (!$lineItem) {
             return null;
         }
@@ -221,7 +214,7 @@ class Attempt extends Eloquent {
 
         if ($convertToDateTime && $dueAt) { //don't convert a null value
             //convert due_at from datetime to timestamp
-            return new DateTime($this->due_at);
+            return new DateTime($dueAt);
         }
 
         return $dueAt;
@@ -268,16 +261,6 @@ class Attempt extends Eloquent {
     }
 
     /**
-    * Get an attempt's sourcedId
-    *
-    * @return string
-    */
-
-    public function getSourcedId() {
-        return $this->lis_result_sourcedid;
-    }
-
-    /**
     * Get all attempts made on an assessment in a course context
     *
     * @param  int  $assessment_id
@@ -303,10 +286,11 @@ class Attempt extends Eloquent {
             ->orderBy('attempts.created_at', 'ASC');
 
         if ($assignment_id) {
-            $attempts = $attempts->where('lti_custom_assignment_id', '=', $assignment_id);
-        }
-        else {
-            $attempts = $attempts->whereNull('lti_custom_assignment_id');
+            //unfortunately we have to query both for historic 1.1 attempts and 1.3 using line items...
+            $attempts = $attempts->whereHas('lineItem', function ($query) use ($assignment_id) {
+                $query->where('lti_custom_assignment_id', $assignment_id);
+            });
+            $attempts = $attempts->orWhere('lti_custom_assignment_id', '=', $assignment_id);
         }
 
         if ($emptyAttemptsHidden) {
@@ -397,16 +381,14 @@ class Attempt extends Eloquent {
     }
 
     /**
-    * Return the url of the LTI consumer (derived from outcome service url)
+    * Return the url of the LTI consumer (always Canvas in our case)
     *
     * @return string
     */
 
     public function getLtiConsumerUrl()
     {
-        $outcomeServiceUrl = $this->lis_outcome_service_url;
-        $splitUrl = explode('/api/', $outcomeServiceUrl);
-        return $splitUrl[0];
+        return 'https://iu.instructure.com';
     }
 
     /**
@@ -545,7 +527,7 @@ class Attempt extends Eloquent {
     */
 
     public function isTiedToGradebook() {
-        if ($this->lineItem) {
+        if ($this->line_item_id) {
             return true;
         }
 
@@ -668,8 +650,6 @@ class Attempt extends Eloquent {
         $recentAttempts = Attempt::where('student_id', '=', $this->student_id)
             ->where('last_milestone', '!=', $this->TIMEOUT_MILESTONE) //only count valid attempts
             ->where('created_at', '>', $boundary_timestamp) //in a recent time period
-            //TODO: update sourcedid for LTI advantage to determine what is graded or not
-            //->whereNotNull('lis_result_sourcedid') //only include graded attempts
             ->has('studentResponses') //where questions were answered (so not just a view)
             ->limit(20) //limit to ease load on DB, just in case someone is refreshing a lot
             ->get()
@@ -799,13 +779,9 @@ class Attempt extends Eloquent {
         $this->assessment_id = $assessmentId;
         $this->course_context_id = $courseContext->id;
         $this->student_id = $student->id;
-        $this->lti_custom_assignment_id = $ltiContext->getAssignmentId();
         $this->lti_custom_section_id = $ltiContext->getSectionId();
-        //$attempt->lis_outcome_service_url = $ltiContext->; //TODO: needed? something else? keep in DB as NULL for historical data
-        //$attempt->lis_result_sourcedid = ; //TODO: needed? something else? keep in DB as NULL for historical data
         $this->last_milestone = $this->MILESTONE_CREATED;
         $this->assignment_title = $ltiContext->getAssignmentTitle();
-        //$this->due_at = $ltiContext->getDueAt();
         $this->resource_link_id = $ltiContext->getResourceLinkId();
         $this->nonce = $ltiContext->getNonce();
 
@@ -814,12 +790,13 @@ class Attempt extends Eloquent {
         $lineItemUrl = $ltiContext->getLineItemUrl();
         if (!$ltiContext->isInstructor() && $lineItemUrl) {
             $lineItem = LineItem::findByUrl($lineItemUrl);
+            $assignmentId = $ltiContext->getAssignmentId();
             $dueAt = $ltiContext->getDueAt();
             $pointsPossible = $ltiContext->getPointsPossible();
 
             if (!$lineItem) {
                 $lineItem = new LineItem();
-                $lineItem->initialize($lineItemUrl, $dueAt);
+                $lineItem->initialize($lineItemUrl, $dueAt, $assignmentId);
             }
 
             if ($lineItem->getDueAt() != $dueAt) { //update if instructor changed due date
@@ -856,12 +833,6 @@ class Attempt extends Eloquent {
         if ($this->isAnonymous()) {
             return false;
         }
-
-        //TODO: need to update this for LTI advantage
-        //if ungraded, no timeout necessary
-        //if (!$this->lis_result_sourcedid) {
-        //    return false;
-        //}
 
         //if studying after the due date, no timeout necessary
         if ($this->isPastDue()) {

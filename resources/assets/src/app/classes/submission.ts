@@ -21,7 +21,7 @@ export class Submission {
   }
 
   isGradeable() {
-    if (!this.attempt.lis_result_sourcedid) { //instructor/designer OR ungraded
+    if (!this.attempt.line_item_id) { //instructor/designer OR ungraded
       return false;
     }
     if (this.pointsPossible === 0) {

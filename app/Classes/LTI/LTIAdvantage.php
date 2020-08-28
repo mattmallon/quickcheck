@@ -75,7 +75,7 @@ class LTIAdvantage {
     {
         $unresponsiveErrorMessage = 'The Canvas gradebook is currently unresponsive. Please try again later.';
 
-        if (!$data) {
+        if (is_null($data)) {
             throw new GradePassbackException($unresponsiveErrorMessage);
         }
 
@@ -106,6 +106,19 @@ class LTIAdvantage {
         throw new GradePassbackException($errorMessage);
     }
 
+    public function createLineItem($lineItemsUrl, $scoreMaximum, $label)
+    {
+        $this->initOauthToken();
+        if (!$this->oauthHeader) {
+            abort(500, 'Oauth token not set on user.');
+        }
+
+        $params = ['scoreMaximum' => $scoreMaximum, 'label' => $label, "resourceLinkId" => "0c46cc3f-f456-4a14-980f-2104a48bbc6d"];
+        $jsonResponse = $this->curlPost($lineItemsUrl, $this->oauthHeader, $params);
+        $data = $this->getResponseBody($jsonResponse);
+
+        return $data;
+    }
 
     public function decodeLaunchJwt() {
         $rawJwt = $this->request->get('id_token');

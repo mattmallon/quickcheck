@@ -26,6 +26,13 @@ class LtiContext {
     /* PUBLIC FUNCTIONS *****************************************************/
     /************************************************************************/
 
+    public function createLineItem($lineItemsUrl, $scoreMaximum = 0, $label = 'Quick Check next 2')
+    {
+        $lti = new LTIAdvantage();
+        $result = $lti->createLineItem($lineItemsUrl, $scoreMaximum, $label);
+        return $result;
+    }
+
     public function getAllLineItems($lineItemsUrl)
     {
         $lti = new LTIAdvantage();
@@ -128,7 +135,13 @@ class LtiContext {
             return false;
         }
 
-        return $this->launchValues[$this->customKey]->canvas_assignment_dueat;
+        $dueAt = $this->launchValues[$this->customKey]->canvas_assignment_dueat;
+        //not sure why, but Canvas gives this value instead of NULL if no due date set! bizarre!
+        if ($dueAt == '$Canvas.assignment.dueAt.iso8601') {
+            return null;
+        }
+
+        return $dueAt;
     }
 
     /**
