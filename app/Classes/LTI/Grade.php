@@ -59,12 +59,13 @@ class Grade {
     /**
     * Submit a grade to the gradebook
     *
+    * @param $scoreGiven  int  If an instructor is grading, override default score from attempt
     * @return  boolean (on success/error)
     */
 
-    public function submitGrade()
+    public function submitGrade($scoreGiven = null)
     {
-        $gradePassbackResult = $this->doGradePassback();
+        $gradePassbackResult = $this->doGradePassback($scoreGiven);
         return $gradePassbackResult;
     }
 
@@ -76,10 +77,11 @@ class Grade {
     * The guts of grade passback; relies on Outcome model. Score is 0-1.
     * Checks that the new score is higher than the existing score in the gradebook.
     *
+    * @param $scoreGiven  int  If an instructor is grading, override default score from attempt
     * @return boolean (on success/error)
     */
 
-    private function doGradePassback()
+    private function doGradePassback($scoreGiven = null)
     {
         $lineItem = $this->attempt->lineItem;
         $lineItemUrl = $lineItem->getUrl();
@@ -88,13 +90,13 @@ class Grade {
         $student = $this->attempt->student;
         $userId = $student->getCanvasUserId();
         $result = $ltiContext->getResult($lineItemUrl, $userId);
-        //dd($result);
         if (!$result) { //if no submission yet and NULL, then convert to numeric value of 0
             $result = 0;
         }
-        $scoreGiven = $this->attempt->getCalculatedScore();
+
+        $scoreGiven = $scoreGiven ? $scoreGiven : $this->attempt->getCalculatedScore();
         $gradeToSubmit = $this->formatGradeToSubmit($scoreGiven, $scoreMaximum);
-        if ($gradeToSubmit <= $result) {
+        if ($gradeToSubmit <= $result && !$scoreGiven) { //let instructor override and give a lower score
             return true;
         }
 

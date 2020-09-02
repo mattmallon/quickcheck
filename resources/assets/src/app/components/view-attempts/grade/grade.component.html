@@ -3,7 +3,7 @@
 </span>
 <span *ngIf="this.isUserInCourse">
     <span *ngIf="!this.submission.isGradeable()">
-        NA
+        NA <span *ngIf="this.submission.isHistoricLtiAttempt()">(outdated tool install)</span>
     </span>
     <span *ngIf="this.submission.isGradeable()">
         <!-- when a grade has already been recorded -->

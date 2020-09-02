@@ -46,7 +46,12 @@ class LtiContext {
             return false;
         }
 
-        return $this->launchValues[$this->customKey]->canvas_assignment_id;
+        $assignmentId = $this->launchValues[$this->customKey]->canvas_assignment_id;
+        if ($assignmentId === '$Canvas.assignment.id') {
+            return null;
+        }
+
+        return $assignmentId;
     }
 
     public function getAssignmentTitle()
@@ -55,7 +60,12 @@ class LtiContext {
             return false;
         }
 
-        return $this->launchValues[$this->customKey]->canvas_assignment_title;
+        $assignmentTitle = $this->launchValues[$this->customKey]->canvas_assignment_title;
+        if ($assignmentTitle === '$Canvas.assignment.title') {
+            return null;
+        }
+
+        return $assignmentTitle;
     }
 
     /**

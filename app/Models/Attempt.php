@@ -141,7 +141,7 @@ class Attempt extends Eloquent {
     */
 
     public function getAssignmentId() {
-        return $this->lti_custom_assignment_id;
+        return $this->lineItem->getAssignmentId();
     }
 
     /**
@@ -291,6 +291,10 @@ class Attempt extends Eloquent {
                 $query->where('lti_custom_assignment_id', $assignment_id);
             });
             $attempts = $attempts->orWhere('lti_custom_assignment_id', '=', $assignment_id);
+        }
+        else {
+            //applies both to 1.3 module launches and all historic 1.1 launches
+            $attempts = $attempts->doesntHave('lineItem');
         }
 
         if ($emptyAttemptsHidden) {

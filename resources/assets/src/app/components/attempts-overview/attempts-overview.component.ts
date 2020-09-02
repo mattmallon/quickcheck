@@ -73,10 +73,17 @@ export class AttemptsOverviewComponent implements OnInit {
   }
 
   getAssignmentId(attempt) {
+    //1.1 attempts that were graded
+    if (attempt.lti_custom_assignment_id) {
+      return attempt.lti_custom_assignment_id;
+    }
+
+    //1.1 and 1.3 attempts that are ungraded
     if (!attempt.line_item) {
       return null;
     }
 
+    //graded 1.3 attempts
     return attempt.line_item.lti_custom_assignment_id;
   }
 

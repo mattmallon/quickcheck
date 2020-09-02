@@ -47,6 +47,14 @@ export class Submission {
     return false; //user in course, graded assignment, but no graded submission
   }
 
+  isHistoricLtiAttempt() {
+    if (this.attempt.lti_custom_assignment_id) {
+      return true;
+    }
+
+    return false;
+  }
+
   needsGrade() {
     if (this.isGradeable() && !this.isGraded()) {
       return true;
