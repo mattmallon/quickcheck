@@ -103,18 +103,28 @@ class Attempt extends Eloquent {
                     }
                 }
             }
-            //assessment, student, and course context information
+            //assessment, student, line item, and course context information
             $attempt['assessment_name'] = $attempt['assessment']['name'];
             $studentData = Student::formatExport($attempt['student']);
+            //for LTI 1.3 launches, include info from line item, otherwise use original data if a 1.1 launch
+            if ($attempt['line_item_id']) {
+                $lineItem = $attempt['line_item'];
+                $attempt['due_at'] = $lineItem['due_at'];
+                $attempt['lti_custom_assignment_id'] = $lineItem['lti_custom_assignment_id'];
+            }
             $attempt = array_merge($attempt, $studentData, $courseData);
 
             //remove columns that the instructor doesn't need and nested objects
             $removeKeys = [
                 'assessment',
                 'course_context_id',
+                'line_item_id',
+                'line_item',
                 'student',
                 'student_responses',
-                'student_id'
+                'student_id',
+                'api_token',
+                'nonce'
             ];
             foreach ($removeKeys as $key) {
                 unset($attempt[$key]);

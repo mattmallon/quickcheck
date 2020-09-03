@@ -32,7 +32,8 @@ class CSVController extends \BaseController
             'assessment',
             'assessment.questions',
             'student',
-            'studentResponses'
+            'studentResponses',
+            'lineItem'
         ];
         $courseContext = CourseContext::where('lti_context_id', '=', $context_id)->first();
 
@@ -92,7 +93,8 @@ class CSVController extends \BaseController
             'assessment',
             'assessment.questions',
             'student',
-            'studentResponses'
+            'studentResponses',
+            'lineItem'
         ];
         $courseContext = CourseContext::where('lti_context_id', '=', $context_id)->first();
 
