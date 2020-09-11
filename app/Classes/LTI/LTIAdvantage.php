@@ -225,6 +225,19 @@ class LTIAdvantage {
         return $data;
     }
 
+    public function getMemberships($membershipsUrl)
+    {
+        $this->initOauthToken();
+        if (!$this->oauthHeader) {
+            abort(500, 'Oauth token not set on user.');
+        }
+
+        $jsonResponse = $this->curlGet($membershipsUrl, $this->oauthHeader);
+        $data = $this->getResponseBody($jsonResponse);
+
+        return $data;
+    }
+
     public function getResult($lineItemUrl, $userId) {
         $this->initOauthToken();
         if (!$this->oauthHeader) {

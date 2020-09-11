@@ -226,6 +226,13 @@ class LtiContext {
         return $urls->lineitem;
     }
 
+    public function getMemberships($membershipsUrl)
+    {
+        $lti = new LTIAdvantage();
+        $result = $lti->getMemberships($membershipsUrl);
+        return $result;
+    }
+
     /**
     * Get the nonce for the current launch
     *
@@ -240,6 +247,15 @@ class LtiContext {
         }
 
         return $this->launchValues['nonce'];
+    }
+
+    public function getNRPSLink()
+    {
+        if (!$this->launchValues) {
+            return false;
+        }
+
+        return $this->launchValues[$this->namesRolesServiceKey]->context_memberships_url;
     }
 
     /**
