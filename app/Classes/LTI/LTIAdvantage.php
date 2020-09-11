@@ -106,6 +106,37 @@ class LTIAdvantage {
         throw new GradePassbackException($errorMessage);
     }
 
+    public function createDeepLinkingJwt($deploymentId, $launchUrl, $title)
+    {
+        $this->iss = $this->getIssuer();
+        $resource = [
+            "type" => "ltiResourceLink",
+            "title" => $title,
+            "url" => $launchUrl,
+            "presentation" => [
+                "documentTarget" => "iframe"
+            ]
+        ];
+
+        $jwtData= [
+            "iss" => env('LTI_CLIENT_ID'),
+            "aud" => $this->iss,
+            "exp" => time() + 600,
+            "iat" => time(),
+            "nonce" => hash('sha256', random_bytes(64)),
+            "https://purl.imsglobal.org/spec/lti/claim/deployment_id" => $deploymentId,
+            "https://purl.imsglobal.org/spec/lti/claim/message_type" => "LtiDeepLinkingResponse",
+            "https://purl.imsglobal.org/spec/lti/claim/version" => "1.3.0",
+            "https://purl.imsglobal.org/spec/lti-dl/claim/content_items" => [$resource]
+        ];
+
+        $privateKey = $this->getRsaKeyFromEnv('LTI_PRIVATE_KEY');
+        $kid = env('LTI_JWK_KID', null);
+        $jwt = JWT::encode($jwtData, $privateKey, 'RS256', $kid);
+
+        return $jwt;
+    }
+
     public function createLineItem($lineItemsUrl, $scoreMaximum, $label)
     {
         $this->initOauthToken();

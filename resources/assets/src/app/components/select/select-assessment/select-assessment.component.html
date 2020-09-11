@@ -1,0 +1,15 @@
+<!-- submit button to select embed -->
+<button class="btn btn-success qc-btn qc-select-btn" type="button" (click)="this.select(assessment)">
+    <span class="fa fa-hand-pointer-o fa-lg" aria-hidden="true"></span> Select <span class="sr-only"> quick check {{ assessment.name }}</span>
+</button>
+
+<a [href]="'../assessment/' + assessment.id + '?preview=true'" target="_blank" class="qc-view-btn qc-select-preview-btn">
+    <qc-preview-icon aria-hidden="true"></qc-preview-icon>
+    <span class="sr-only">Preview quick check {{ assessment.name }}</span>
+</a>
+
+<!-- hidden form input that gets programatically triggered to do a POST redirect to Canvas -->
+<form #form class="d-none" method="POST" [action]="this.redirectUrl | safe: 'resourceUrl'">
+    <input type="text" name="JWT" [formControl]="jwtValue">
+    <button type="submit">Submit</button>
+</form>

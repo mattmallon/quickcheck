@@ -1,4 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
+import { CollectionService } from '../../../services/collection.service';
+import { UtilitiesService } from '../../../services/utilities.service';
 
 @Component({
   selector: 'qc-select-collection-panel',
@@ -10,31 +12,12 @@ export class SelectCollectionPanelComponent implements OnInit {
   @Input() membership;
   @Input() redirectUrl;
   @Input() launchUrlStem;
+  @Input() deploymentId;
+  @Input() collectionService: CollectionService;
+  @Input() utilitiesService: UtilitiesService;
 
   constructor() { }
 
   ngOnInit() {
   }
-
-  createContentItemJson(assessment) {
-    var contentItemJson = {
-      '@context': 'http://purl.imsglobal.org/ctx/lti/v1/ContentItem',
-      '@graph': [
-        {
-          '@type': 'LtiLinkItem',
-          '@id': this.launchUrlStem + assessment.id,
-          'url': this.launchUrlStem + assessment.id,
-          'title': assessment.name,
-          'text': 'Quick Check',
-          'mediaType': 'application/vnd.ims.lti.v1.ltilink',
-          'placementAdvice': {
-            'presentationDocumentTarget': 'frame'
-          }
-        }
-      ]
-    };
-
-    return JSON.stringify(contentItemJson);
-  }
-
 }

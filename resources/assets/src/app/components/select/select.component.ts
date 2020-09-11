@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { CollectionService } from '../../services/collection.service';
 import { UserService } from '../../services/user.service';
 import { UtilitiesService } from '../../services/utilities.service';
 import { AuthService } from '../../services/auth.service';
+import { FormControl } from '@angular/forms';
 
 @Component({
   selector: 'qc-select',
@@ -15,6 +16,7 @@ export class SelectComponent implements OnInit {
   admin = false;
   memberships = [];
   assessments = [];
+  deploymentId;
   launchUrlStem;
   redirectUrl;
   search = {
@@ -42,6 +44,7 @@ export class SelectComponent implements OnInit {
     this.utilitiesService.setTitle('Quick Check - Select');
     this.launchUrlStem = this.utilitiesService.getQueryParam('launchUrlStem');
     this.redirectUrl = this.utilitiesService.getQueryParam('redirectUrl');
+    this.deploymentId = this.utilitiesService.getQueryParam('deploymentId');
 
     //if this is the user's first LTI launch recently, authenticate to retrieve API token
     if (!this.apiToken) {
@@ -69,27 +72,6 @@ export class SelectComponent implements OnInit {
   clearSearch() {
     this.search.searchText = '';
     this.updateSearch();
-  }
-
-  createContentItemJson(assessment) {
-    const contentItemJson = {
-      '@context': 'http://purl.imsglobal.org/ctx/lti/v1/ContentItem',
-      '@graph': [
-        {
-          '@type': 'LtiLinkItem',
-          '@id': this.launchUrlStem + assessment.id,
-          'url': this.launchUrlStem + assessment.id,
-          'title': assessment.name,
-          'text': 'Quick Check',
-          'mediaType': 'application/vnd.ims.lti.v1.ltilink',
-          'placementAdvice': {
-            'presentationDocumentTarget': 'frame'
-          }
-        }
-      ]
-    };
-
-    return JSON.stringify(contentItemJson);
   }
 
   //grab the assessments out of the collections/assessment groups to make search easier

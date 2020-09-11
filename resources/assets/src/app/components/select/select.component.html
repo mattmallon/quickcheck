@@ -30,7 +30,10 @@
                             *ngFor="let collection of this.adminCollectionData.collections"
                             [collection]="collection"
                             [launchUrlStem]="this.launchUrlStem"
-                            [redirectUrl]="this.redirectUrl">
+                            [redirectUrl]="this.redirectUrl"
+                            [deploymentId]="this.deploymentId"
+                            [collectionService]="this.collectionService"
+                            [utilitiesService]="this.utilitiesService">
                         </qc-select-collection-panel>
                     </div>
                     <div *ngIf="!this.adminCollectionData.viewAll">
@@ -39,7 +42,10 @@
                             [membership]="membership"
                             [collection]="membership.collection"
                             [launchUrlStem]="this.launchUrlStem"
-                            [redirectUrl]="this.redirectUrl">
+                            [redirectUrl]="this.redirectUrl"
+                            [deploymentId]="this.deploymentId"
+                            [collectionService]="this.collectionService"
+                            [utilitiesService]="this.utilitiesService">
                         </qc-select-collection-panel>
                     </div>
                 </div>
@@ -55,22 +61,14 @@
                         </h5>
                     </div>
                     <div class="col-6 qc-select-row">
-                        <form ngNoForm class="row" method="POST" [action]="this.redirectUrl | safe: 'resourceUrl'">
-                            <!-- hidden form input for content item embed -->
-                            <input type="hidden" name="lti_message_type" value="ContentItemSelection">
-                            <input type="hidden" name="lti_version" value="LTI-1p0">
-                            <input type="hidden" name="content_items" [value]="this.createContentItemJson(assessment)">
-
-                            <!-- submit button to select embed -->
-                            <button class="btn btn-success qc-btn qc-select-btn" type="submit">
-                                <span class="fa fa-hand-pointer-o fa-lg" aria-hidden="true"></span> Select <span class="sr-only"> quick check {{ assessment.name }}</span>
-                            </button>
-
-                            <a [href]="'../assessment/' + assessment.id + '?preview=true'" target="_blank" class="qc-view-btn qc-select-preview-btn">
-                                <qc-preview-icon aria-hidden="true"></qc-preview-icon>
-                                <span class="sr-only">Preview quick check {{ assessment.name }}</span>
-                            </a>
-                        </form>
+                        <qc-select-assessment
+                            [assessment]="assessment"
+                            [launchUrlStem]="this.launchUrlStem"
+                            [redirectUrl]="this.redirectUrl"
+                            [deploymentId]="this.deploymentId"
+                            [collectionService]="this.collectionService"
+                            [utilitiesService]="this.utilitiesService">
+                        </qc-select-assessment>
                     </div>
                 </div>
             </div>

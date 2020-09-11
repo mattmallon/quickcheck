@@ -30,7 +30,7 @@ export class AuthService {
       throw new Error('Authentication failed, required parameters not present.');
     }
 
-    const timeoutLength = this.httpService.getDefaultTimeout();
+    const timeoutLength = this.httpService.getMediumTimeout();
     const path = this.httpService.getApiRoute() + '/authenticate';
     const params = { role, userId, nonce };
 

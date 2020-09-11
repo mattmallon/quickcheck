@@ -2,6 +2,7 @@
 use Illuminate\Http\Request;
 use App\Classes\Auth\AuthFilter;
 use App\Classes\LTI\LtiContext;
+use App\Classes\LTI\LTIAdvantage;
 use App\Models\Collection;
 use App\Models\User;
 use App\Models\AssessmentGroup;
@@ -48,14 +49,16 @@ class CollectionController extends \BaseController
         $ltiContext = new LtiContext;
         $ltiContext->setLaunchValues($request->ltiLaunchValues);
         $canvasRedirectUrl = urlencode($ltiContext->getDeepLinkingRedirectUrl());
+        $deploymentId = urlencode($ltiContext->getDeploymentId());
 
-        if (!$canvasRedirectUrl) {
-            abort(400, 'A valid redirect URL from Canvas must be provided.');
+        if (!$canvasRedirectUrl || !$deploymentId) {
+            abort(400, 'A valid redirect URL and deployment ID from Canvas must be provided.');
         }
 
         //redirect with input vars added as query params to make them available to the front-end
         $launchUrlStem = urlencode(env('APP_URL') . '/index.php/assessment?id=');
         $redirectUrl .= '&redirectUrl=' . $canvasRedirectUrl;
+        $redirectUrl .= '&deploymentId=' . $deploymentId;
         $redirectUrl .= '&launchUrlStem=' . $launchUrlStem;
         return redirect($redirectUrl);
     }
@@ -83,9 +86,10 @@ class CollectionController extends \BaseController
     {
         $redirectUrl = $request->get('redirectUrl');
         $launchUrlStem = $request->get('launchUrlStem');
+        $deploymentId = $request->get('deploymentId');
 
-        if (!$redirectUrl || !$launchUrlStem) {
-            abort(400, 'Redirect url and launch url are required.');
+        if (!$redirectUrl || !$launchUrlStem || !$deploymentId) {
+            abort(400, 'Redirect url, launch url, and deployment ID are required.');
         }
 
         $authFilter = new AuthFilter($request);
@@ -99,6 +103,34 @@ class CollectionController extends \BaseController
     /************************************************************************/
     /* API ENDPOINTS ********************************************************/
     /************************************************************************/
+
+    /**
+    * Create a JWT to be passed to the front-end for LTI 1.3 deep linking requests
+    *
+    * @return Response
+    */
+
+    public function createDeepLinkingJwt(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'deploymentId' => 'required',
+            'launchUrl' => 'required',
+            'title' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->error(400);
+        }
+
+        $deploymentId = $request->input('deploymentId');
+        $title = $request->input('title');
+        $launchUrl = $request->input('launchUrl');
+
+        $lti = new LTIAdvantage();
+        $jwt = $lti->createDeepLinkingJwt($deploymentId, $launchUrl, $title);
+
+        return response()->success(['jwt' => $jwt]);
+    }
 
     /**
     * Delete the collection

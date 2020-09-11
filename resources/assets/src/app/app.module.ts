@@ -2,6 +2,7 @@ import { BrowserModule, Title } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { HttpClientModule, HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
+import { ReactiveFormsModule } from '@angular/forms';
 
 import { AppRoutingModule } from './app-routing.module';
 import { RouterModule } from '@angular/router';
@@ -100,6 +101,7 @@ import { SessionnotvalidComponent } from './components/errors/sessionnotvalid/se
 import { LtisessionnotvalidComponent } from './components/errors/ltisessionnotvalid/ltisessionnotvalid.component';
 import { ErrorComponent } from './components/errors/error/error.component';
 import { EstablishCookieTrustComponent } from './components/shared/establish-cookie-trust/establish-cookie-trust.component';
+import { SelectAssessmentComponent } from './components/select/select-assessment/select-assessment.component';
 
 
 @NgModule({
@@ -188,12 +190,14 @@ import { EstablishCookieTrustComponent } from './components/shared/establish-coo
     LtisessionnotvalidComponent,
     ErrorComponent,
     EstablishCookieTrustComponent,
+    SelectAssessmentComponent,
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     HttpClientModule,
     FormsModule,
+    ReactiveFormsModule,
     CollapseModule.forRoot(),
     BrowserAnimationsModule,
     ModalModule.forRoot(),

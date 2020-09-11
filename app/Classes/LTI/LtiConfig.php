@@ -31,7 +31,7 @@ class LtiConfig {
             $this->titleText .= ' (' . $this->environment . ')';
         }
         //TODO: Quick Check icon url
-        $this->iconUrl = "https://toolfinder.eds.iu.edu/storage/thumbnails/whg61rklT43ZvK3T4rZZ70reFfX8djh3akfSkkot.png";
+        $this->iconUrl = $this->appUrl . '/assets/img/rce_lti_icon.png';
         $this->selectionWidth = 550;
         $this->selectionHeight = 750;
         $this->scopes = [
@@ -100,7 +100,7 @@ class LtiConfig {
                                 "icon_url" => $this->iconUrl,
                                 "placement" => "editor_button",
                                 "message_type" => "LtiDeepLinkingRequest",
-                                "url" => $this->selectUrl,
+                                "target_link_uri" => $this->selectUrl,
                                 "selection_width" => $this->selectionWidth,
                                 "selection_height" => $this->selectionHeight
                             ]

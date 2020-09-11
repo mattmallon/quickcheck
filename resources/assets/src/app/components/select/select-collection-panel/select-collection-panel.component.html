@@ -11,8 +11,7 @@
         <div class="card-body">
             <div *ngFor="let assessmentGroup of this.collection.assessment_groups" class="qc-select-assessment-group">
                 <h4>{{assessmentGroup.name}}</h4>
-                <form ngNoForm class="row qc-select-assessment" method="POST" [action]="this.redirectUrl | safe: 'resourceUrl'"
-                    *ngFor="let assessment of assessmentGroup.assessments">
+                <div class="row qc-select-assessment" *ngFor="let assessment of assessmentGroup.assessments">
                     <div class="col-6 qc-select-row">
                         <h5 class="admin-assessment-name">
                             {{ assessment.name }}
@@ -20,23 +19,16 @@
                         </h5>
                     </div>
                     <div class="col-6 qc-select-row">
-                        <!-- hidden form input for content item embed -->
-                        <input type="hidden" name="lti_message_type" value="ContentItemSelection">
-                        <input type="hidden" name="lti_version" value="LTI-1p0">
-                        <input type="hidden" name="content_items" [value]="this.createContentItemJson(assessment)">
-
-                        <!-- submit button to select embed -->
-                        <button class="btn btn-success qc-btn qc-select-btn" type="submit">
-                            <span class="fa fa-hand-pointer-o fa-lg" aria-hidden="true"></span> Select <span class="sr-only"> quick check {{assessment.name}}</span>
-                        </button>
-
-                        <!-- preview button -->
-                        <a [href]="'../assessment/' + assessment.id + '?preview=true'" target="_blank" class="qc-view-btn qc-select-preview-btn">
-                            <qc-preview-icon aria-hidden="true"></qc-preview-icon>
-                            <span class="sr-only">Preview quick check {{assessment.name}}</span>
-                        </a>
+                        <qc-select-assessment
+                            [assessment]="assessment"
+                            [launchUrlStem]="this.launchUrlStem"
+                            [redirectUrl]="this.redirectUrl"
+                            [deploymentId]="this.deploymentId"
+                            [collectionService]="this.collectionService"
+                            [utilitiesService]="this.utilitiesService">
+                        </qc-select-assessment>
                     </div>
-                </form>
+                </div>
                 <div *ngIf="!assessmentGroup.assessments.length">
                     <h5>There are no quick checks in this subset. You can add a quick check by clicking on the quick check tool in the course navigation.</h5>
                 </div>

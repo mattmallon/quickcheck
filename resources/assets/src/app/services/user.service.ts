@@ -41,7 +41,7 @@ export class UserService {
   }
 
   async getUser() {
-    const timeoutLength = this.httpService.getDefaultTimeout();
+    const timeoutLength = this.httpService.getMediumTimeout();
     const path = this.httpService.getApiRoute() + '/user';
 
     return await this.httpClient.get(path, this.httpOptions)

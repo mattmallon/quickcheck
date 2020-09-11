@@ -146,6 +146,7 @@ Route::group(array('middleware' => array('auth')), function() {
         Route::delete('collection/{id}', 'CollectionController@destroy');
         Route::post('quickadd', 'CollectionController@quickAdd');
         Route::post('collection/{id}/search', 'CollectionController@search');
+        Route::post('createDeepLinkingJwt', 'CollectionController@createDeepLinkingJwt');
 
         //public collection endpoints
         Route::get('publiccollections', 'CollectionController@publicIndex');

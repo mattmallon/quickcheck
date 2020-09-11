@@ -133,6 +133,15 @@ class LtiContext {
         return $deepLinkSettings->deep_link_return_url;
     }
 
+    public function getDeploymentId()
+    {
+        if (!$this->launchValues) {
+            return false;
+        }
+
+        return $this->launchValues['https://purl.imsglobal.org/spec/lti/claim/deployment_id'];
+    }
+
     /**
     * Get due at value for current launch
     *
