@@ -57,17 +57,32 @@ Hosting should be configured to point the application root URL to the "public" d
 
 The application must be served over a secure https connection in order to function as an LTI tool. See the next section on how to configure and install Quick Check in your Canvas instance.
 
-## LTI Configuration
+## LTI 1.3 Configuration
 
-First, ensure that an `LTI_KEY` and `LTI_SECRET` have been set in the .env file on the server. These should be secure values (i.e., don't use "test" for the key and secret), and this information should only be made available to system admins responsible for installing the tool.
+First, [generate a JWK](https://mkjwk.org/) using the options:
 
-In Canvas, when adding the app, use the following values:
+ * RSA
+ * Key Size: 2048
+ * Key Use: Signature
+ * Algorithm: RS256
+ * Key ID: you have the option to specify a value or select a pre-existing option to generate a unique value
 
- * Configuration Type: By URL
- * Name: Quick Check
- * Consumer Key: [enter the value in the .env file]
- * Shared Secret: [enter the value in the .env file]
- * Config Url: [enter the app endpoint at /index.php/lticonfig to generate an XML file; example: https://quickcheck.institution.edu/index.php/lticonfig]
+In the .env file, insert values for `LTI_JWK_KID` and `LTI_JWK_N` based on the output values. These are used to dynamically generate the JWK when installing the tool in Canvas.
+
+Next, [generate a public and private key](https://keytool.online/) by copying and pasting the JWK public and private keypair generated in the previous step into the "RSA key" box near the top of the page. For both public and private key, select the option of "PEM (PKCS#8)" and copy and paste the values into the .env for `LTI_PUBLIC_KEY` and `LTI_PRIVATE_KEY` respectively. Ensure that the line breaks remain the same, as they must retain the same form to be considered valid.
+
+To install the app in Canvas:
+
+1. In the admin section of the root account, go to the Developer Keys section, add a new developer key, and select "LTI key" as the type.
+2. Select "Enter URL" as the method.
+3. Under "JSON URL" enter the app endpoint at `/lticonfig` to generate the JSON config; example: https://quickcheck.institution.edu/lticonfig
+4. Under "Redirect URIs" enter the following values, substituting [app url] for your hosted app's url:
+ * [app url]/index.php/assessment
+ * [app url]/index.php/home
+ * [app url]/index.php/select
+ * [app url]/index.php/logininitiations
+5. Save the developer key and after it is installed, look under the "details" section of the listed key. Enter the numerical value listed in the .env value for `LTI_CLIENT_ID`. Click on "Show Key" and copy and paste the value listed in the .env value for `LTI_CLIENT_SECRET`.
+6. In either the root account or the subaccount(s) of your choosing, the tool can be installed by going to "Settings" in the admin panel of the account, then "Apps" and then "View App Configurations" and clicking the "+ App" button. Under "Configuration Type" select "By Client ID" and then copy and paste the `LTI_CLIENT_ID` value.
 
 The tool is hidden by default in the left navigation. Make the application visible in the left nav to access it. Quick Checks can still be embedded and taken by students even if the tool remains hidden in the left nav. The left nav link is used for creating quick checks and reviewing results.
 
