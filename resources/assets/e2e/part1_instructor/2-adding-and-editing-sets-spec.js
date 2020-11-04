@@ -15,7 +15,6 @@ describe('Adding a set', function () {
     it('should add the set to the user\’s list after being created', async function () {
         await viewSetsPage.getAddSetNameField().sendKeys(sets.toBeDeleted.name);
         await viewSetsPage.getAddDescriptionNameField().sendKeys(sets.toBeDeleted.description);
-        //browser.sleep(1000); //ugh, kept on failing here for NO REASON on some runs, worked fine on others
         await viewSetsPage.saveNewSet();
         let membershipTiles = viewSetsPage.getMembershipTiles();
         const newSet = membershipTiles.get(0);
@@ -86,21 +85,12 @@ describe('Editing a set', function () {
     });
 });
 
-//NOTE: protractor was throwing an error and shutting down each time an alert message came up; surprisingly, couldn't find
-//any similar errors from other developers when googling, so not sure how to solve it. I think it's getting confused because
-//the app is in an iframe and the context for the alert message is appearing in the parent window. To get around this, we'll
-//open the collection in a new tab, so the alert does not throw an error in protractor. We also need to test the alert that
-//appears when a user tries to navigate away from editing a quiz after entering data. So we'll test all of that in a new tab,
-//then test deleting the assessment/group/collection, then close the tab and navigate back to the previous tab to go back to
-//the Canvas iframe.
-
 describe('Viewing a set', function () {
     it('should initially show instructions for adding a subset', async function () {
         var membershipTile = viewSetsPage.getMembershipTiles().first(),
-            newTabBtn = viewSetsPage.getGoToSetNewTabBtn(membershipTile);
+            setBtn = viewSetsPage.getGoToSetBtn(membershipTile);
 
-        await newTabBtn.click();
-        await common.switchTab(1);
+        await setBtn.click();
         expect(await setPage.getInitialInstructions().isDisplayed()).toBe(true);
     });
 });

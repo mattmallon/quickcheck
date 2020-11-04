@@ -9,7 +9,7 @@
     "resources/assets/src/polyfills.ts"
   ],
   "include": [
-    "resources/assets/src/**/*.ts"
+    "resources/assets/src/**/*.d.ts"
   ],
   "exclude": [
     "resources/assets/src/test.ts",

@@ -123,7 +123,6 @@ describe('Importing a QTI package', function() {
                 await common.enterNonAngularPage();
                 expect(await common.getTinyMceText()).toBe('Answer is A. Here is an image:');
                 await common.leaveTinyMceIframe();
-                await common.switchToLtiTool();
             });
 
             it('should have the correct question type', async function() {
@@ -275,11 +274,11 @@ describe('Importing a QTI package', function() {
             });
 
             it('should have the correct options', async function() {
-                var inputs = await question.getDropdownTextInputs();
-                expect(await inputs[0].getAttribute('value')).toBe('The sky is ');
-                expect(await inputs[1].getAttribute('value')).toBe('blue');
-                expect(await inputs[2].getAttribute('value')).toBe(' and the grass is ');
-                expect(await inputs[3].getAttribute('value')).toBe('green');
+                var inputs = question.getDropdownTextInputs();
+                expect(await inputs.get(0).getAttribute('value')).toBe('The sky is ');
+                expect(await inputs.get(1).getAttribute('value')).toBe('blue');
+                expect(await inputs.get(2).getAttribute('value')).toBe(' and the grass is ');
+                expect(await inputs.get(3).getAttribute('value')).toBe('green');
             });
         });
 
@@ -295,16 +294,16 @@ describe('Importing a QTI package', function() {
             });
 
             it('should have the correct options', async function() {
-                var options = await question.getMatchingPairInputs();
-                expect(await options[0].getAttribute('value')).toBe('Indianapolis');
-                expect(await options[1].getAttribute('value')).toBe('Indiana');
-                expect(await options[2].getAttribute('value')).toBe('Springfield');
-                expect(await options[3].getAttribute('value')).toBe('Illinois');
+                var options = question.getMatchingPairInputs();
+                expect(await options.get(0).getAttribute('value')).toBe('Indianapolis');
+                expect(await options.get(1).getAttribute('value')).toBe('Indiana');
+                expect(await options.get(2).getAttribute('value')).toBe('Springfield');
+                expect(await options.get(3).getAttribute('value')).toBe('Illinois');
             });
 
             it('should have the correct distractors', async function() {
-                const distractors = await question.getDistractors();
-                const distractor = distractors[0];
+                const distractors = question.getDistractors();
+                const distractor = distractors.get(0);
                 expect(await question.getDistractorInput(distractor).getAttribute('value')).toBe('Ohio');
             });
         });

@@ -117,7 +117,6 @@ describe('Deleting custom activities', function() {
     it('should remove the custom activity from the list after being deleted', async function() {
         //add a new one to throw away
         await custom.addActivity();
-        await browser3.sleep(1000); //9/27/19, this part would intermittently fail, unable to find name, give it a sec
         await custom.getNewNameInput().sendKeys('Whatever');
         await custom.getNewDescriptionInput().sendKeys('Whatever');
         await custom.getNewUrlInput().sendKeys('https://google.com');

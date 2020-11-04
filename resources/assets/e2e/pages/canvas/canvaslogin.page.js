@@ -11,6 +11,8 @@ var CanvasLogin = function(browserRef) {
     //I could make separate page objects for each, but considering we nede to do like ONE THING
     //on each of these pages, it just makes more sense to keep it in one, even if a touch clunkier)
     page.canvasNav = '#section-tabs';
+    page.casEmailBtn = '#email';
+    page.casGuestTab = '#tab-guest';
     page.casPasswordField = '#password';
     page.casSubmitBtn = '#login-button';
     page.casUserNameField = '#username';
@@ -28,7 +30,8 @@ var CanvasLogin = function(browserRef) {
 
     async function login(username, password) {
         await page.browser.driver.get(page.rootUrl);
-        await page.browser.driver.findElement(by.linkText(page.loginBtn)).click();
+        await page.browser.driver.findElement(by.css(page.casGuestTab)).click();
+        await page.browser.driver.findElement(by.css(page.casEmailBtn)).click();
         await page.browser.driver.findElement(by.css(page.casUserNameField)).sendKeys(username);
         await page.browser.driver.findElement(by.css(page.casPasswordField)).sendKeys(password);
         await page.browser.driver.findElement(by.css(page.casSubmitBtn)).click();

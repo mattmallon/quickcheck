@@ -4,7 +4,8 @@ var includes = require('../common/includes.js'),
     data = includes.data,
     editQcPage = new includes.EditQcPage(browser),
     homePage = new includes.HomePage(browser),
-    setPage = new includes.SetPage(browser);
+    setPage = new includes.SetPage(browser),
+    EC = protractor.ExpectedConditions;
 
 describe('Adding a question', function() {
     it('should label the question as question #1', async function() {
@@ -30,7 +31,6 @@ describe('Adding a multiple choice question', function() {
         expect(await common.getTinyMceText()).toBe(questionText);
 
         await common.leaveTinyMceIframe();
-        await common.switchToLtiTool();
         await common.enterAngularPage();
     });
 
@@ -175,15 +175,21 @@ describe('Adding a multiple correct question', function() {
         expect(await editQcPage.getSaveError().getText()).toContain(data.validateNoCorrectMessage);
     });
 
-    //intermittent failures here, adding lots of sleep as I can't pinpoint the exact spot where the issue is!
     it('should allow marking multiple options as correct', async function() {
-        await browser.sleep(1500);
         var options = question.getOptions();
-        await browser.sleep(1500);
+        //MM, 10/7/20: this spot kept failing where the first multiple correct option was NOT being marked
+        //as correct, but second one was fine. I think since the error message shown has page focus (for
+        //accessibility reasons), that clicking not on a non-native-html element (like a button or input)
+        //but instead on an element with an aria role of button, like our correctness toggle, is just
+        //removing the current focus with the click but not actually selecting what we want. tried to add
+        //a click just to the body of the page every time we get the error message in a reusable spot in
+        //the component class, but that didn't work. I wonder if it also has something to do with needing
+        //to scroll because of the iframe? anyhow, I added a click to the input of the option we want to
+        //mark as correct before actually doing so and that seemed to fix the issue.
+        //TODO: see if this part and other troublesome parts work with the new tab thing
+        //await question.getOptionInput(options.get(0)).click();
         await question.toggleMcOptionCorrect(options.get(0));
-        await browser.sleep(1500);
         await question.toggleMcOptionCorrect(options.get(1));
-        await browser.sleep(1500);
         expect(await question.isMcOptionMarkedCorrect(options.get(0))).toBe(true);
         expect(await question.isMcOptionMarkedCorrect(options.get(1))).toBe(true);
     });
@@ -347,11 +353,11 @@ describe('Adding a matching question', function() {
         var optionToDelete;
         //Add in another row, then fill in all of the new text inputs to make it valid
         await question.addMatchingPair();
-        const textInputs = await question.getMatchingPairInputs();
-        await textInputs[0].sendKeys(questionData.prompt1);
-        await textInputs[1].sendKeys(questionData.answer1);
-        await textInputs[2].sendKeys(questionData.prompt2);
-        await textInputs[3].sendKeys(questionData.answer2);
+        const textInputs = question.getMatchingPairInputs();
+        await textInputs.get(0).sendKeys(questionData.prompt1);
+        await textInputs.get(1).sendKeys(questionData.answer1);
+        await textInputs.get(2).sendKeys(questionData.prompt2);
+        await textInputs.get(3).sendKeys(questionData.answer2);
 
         //add a third row, then delete it
         await question.addMatchingPair();
@@ -362,23 +368,25 @@ describe('Adding a matching question', function() {
 
     it('should allow adding distractors', async function() {
         await question.addDistractor();
-        const distractors = await question.getDistractors();
-        expect(distractors.length).toBe(1);
+        const distractors = question.getDistractors();
+        expect(await distractors.count()).toBe(1);
     });
 
     it('should throw a validation error if a distractor field isn\'t filled', async function() {
-        const distractors = await question.getDistractors();
-        await question.enterDistractor(distractors[0], questionData.distractor);
+        const distractors = question.getDistractors();
+        await question.enterDistractor(distractors.get(0), questionData.distractor);
         await question.addDistractor();
         await editQcPage.saveWithoutSuccess();
         expect(await editQcPage.getSaveSuccess().isPresent()).toBe(false);
     });
 
     it('should allow deleting distractors', async function() {
-        const distractors = await question.getDistractors();
-        await question.deleteOption(distractors[1]);
-        const updatedDistractors = await question.getDistractors();
-        await expect(updatedDistractors.length).toBe(1);
+        const distractors = question.getDistractors();
+        //reset focus, this spot was failing randomly
+        //await question.getDistractorInput(distractors.get(1)).click();
+        await question.deleteOption(distractors.get(1));
+        const updatedDistractors = question.getDistractors();
+        await expect(await updatedDistractors.count()).toBe(1);
     });
 
     it('should not show an option for per-response feedback', async function() {
@@ -408,8 +416,8 @@ describe('Adding a multiple dropdowns question', function() {
 
     it('should allow adding dropdown pairs', async function() {
         await question.addDropdownPair();
-        const prompts = await question.getDropdownPrompts();
-        expect(await prompts.length).toBe(1);
+        const prompts = question.getDropdownPrompts();
+        expect(await prompts.count()).toBe(1);
     });
 
     it('should throw a validation error if a dropdown pair field isn\'t filled', async function() {
@@ -420,17 +428,17 @@ describe('Adding a multiple dropdowns question', function() {
     it('should allow deleting dropdown pairs', async function() {
         //add in the valid data
         await question.addDropdownPair();
-        const textInputs = await question.getDropdownTextInputs();
-        await textInputs[0].sendKeys(questionData.prompt1);
-        await textInputs[1].sendKeys(questionData.answer1);
-        await textInputs[2].sendKeys(questionData.prompt2);
-        await textInputs[3].sendKeys(questionData.answer2);
+        const textInputs = question.getDropdownTextInputs();
+        await textInputs.get(0).sendKeys(questionData.prompt1);
+        await textInputs.get(1).sendKeys(questionData.answer1);
+        await textInputs.get(2).sendKeys(questionData.prompt2);
+        await textInputs.get(3).sendKeys(questionData.answer2);
 
         await question.addDropdownPair();
-        let prompts = await question.getDropdownPrompts();
-        await question.deleteOption(prompts[2]);
-        prompts = await question.getDropdownPrompts();
-        expect(await prompts.length).toBe(2);
+        let prompts = question.getDropdownPrompts();
+        await question.deleteOption(prompts.get(2));
+        prompts = question.getDropdownPrompts();
+        expect(await prompts.count()).toBe(2);
     });
 
     it('should allow adding distractors', async function() {
@@ -443,14 +451,13 @@ describe('Adding a multiple dropdowns question', function() {
         expect(await editQcPage.getSaveSuccess().isPresent()).toBe(false);
     });
 
-    it('should allow deleting distractors', function() {
-        question.getDistractors().then(async function(distractors) {
-            //fill in text for the first distractor
-            await question.enterDistractor(distractors[0], questionData.distractor);
-            await question.addDistractor();
-            await question.deleteOption(question.getDistractors().get(1));
-            expect(await question.getDistractors().count()).toBe(1);
-        });
+    it('should allow deleting distractors', async function() {
+        const distractors = question.getDistractors();
+        //fill in text for the first distractor
+        await question.enterDistractor(question.getDistractors().get(0), questionData.distractor);
+        await question.addDistractor();
+        await question.deleteOption(question.getDistractors().get(1));
+        expect(await question.getDistractors().count()).toBe(1);
     });
 
     it('should not show an option for per-response feedback', async function() {
@@ -488,7 +495,6 @@ describe('Adding a textmatch question', function() {
 
     it('should allow deleting a possible answer', async function() {
         await question.addTextmatchAnswer();
-        await browser.sleep(1000);
         await question.deleteOption(question.getOptions().get(1));
         expect(await question.getOptions().count()).toBe(1);
     });
@@ -718,7 +724,6 @@ describe('Adding the rest of the quick checks for testing purposes', function() 
         await currentQuestion.toggleRandomized();
         for(i = 0; i < 2; i++) {
             await currentQuestion.addMatchingPair();
-            await browser.sleep(1000); //would inconsistently fail without this, argh
         }
         const matchingPairInputs = await currentQuestion.getMatchingPairInputs();
         await matchingPairInputs[0].sendKeys(quizData.question2.prompt1);
@@ -753,27 +758,23 @@ describe('Adding the rest of the quick checks for testing purposes', function() 
         //1. exact answer with 0 as margin of error; note that the answer itself is 0 in this case,
         //so we can also ensure that 0 is accepted as an answer (previous bug fix)
         await currentQuestion.addNumericalAnswer();
-        await browser.sleep(2000); //would fail inconsistently at this point, saying no options added
         //NOTE: at this point, there were no numerical options present, hrm; also an issue intermittently with text match in previous test so maybe related
         option1 = currentQuestion.getOptions().get(0);
         await currentQuestion.enterNumericalExactOption(option1, questionData.option1.exact, questionData.option1.margin);
 
         //2. exact answer with margin of error
         await currentQuestion.addNumericalAnswer();
-        await browser.sleep(2000);
         option2 = currentQuestion.getOptions().get(1);
         await currentQuestion.enterNumericalExactOption(option2, questionData.option2.exact, questionData.option2.margin);
 
         //3. range answer
         await currentQuestion.addNumericalAnswer();
-        await browser.sleep(2000);
 
         //MM, 11/5/19: repeated error in this part where protractor seemed to think last option was not there,
         //make sure to click it again if not clicked the first time
         const count = await currentQuestion.getOptions().count();
         if (count !== 3) {
             await currentQuestion.addNumericalAnswer();
-            await browser.sleep(2000);
         }
 
         option3 = currentQuestion.getOptions().get(2);

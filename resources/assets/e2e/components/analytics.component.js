@@ -138,7 +138,6 @@ var AnalyticsComponent = function(browserRef) {
         //9/27/19: sometimes tests fail because link supposedly clicked but nothing happened, trying scrolling to fix
         await component.common.scrollToElement(component.backBtn);
         await component.backBtn.click();
-        await component.browser.sleep(1500);
     }
 
     async function toggleOtherResponses(index) {

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import {environment} from '../../environments/environment';
-import * as moment from 'moment-timezone';
+import moment from 'moment-timezone';
 import { Title } from '@angular/platform-browser';
 import * as cloneDeep from 'lodash/cloneDeep';
 import { AuthService } from './auth.service';
@@ -186,12 +186,14 @@ export class UtilitiesService {
   }
 
   getCookieErrorMsg() {
-    return `Due to the way in which some browsers (such as Safari) handle third-party
-    cookies, Quick Check requires you to open in a new tab the first time you are accessing the
-    tool, to establish trust. You will need to refresh this page after opening in a new tab.
-    In the future when accessing Quick Check, the tool will function normally without requiring this step.
-    Please click the following link to <a href="/establishcookietrust" target="_blank">open in a new tab</a>.
-    Alternatively, a different browser can be used. Thank you.`;
+    return `Third party cookies are required to run Quick Check but are currently being blocked by the browser.
+    You may choose to use a different browser with third party cookies enabled, or alter the settings for the
+    current browser. Please change the setting to allow all cookies. For instructions, please see the following for
+    <a href="https://support.google.com/chrome/answer/95647?co=GENIE.Platform%3DDesktop&hl=en" target="_blank">Chrome</a>
+    (select the option to allow all cookies), <a href="https://support.apple.com/guide/safari/manage-cookies-and-website-data-sfri11471/mac"
+    target="_blank">Safari</a> (uncheck the box for "prevent cross-site tracking"), and
+    <a href="https://support.mozilla.org/en-US/kb/disable-third-party-cookies" target="_blank">Firefox</a>
+    (follow the instructions to enable third-party cookies for specific sites). Thank you.`;
   }
 
   //for cases where the error is in a non-centralized location (i.e., showing an error
@@ -412,6 +414,7 @@ export class UtilitiesService {
     setTimeout(() => {
       //default to the exact iframe height, plus a sliver extra just in case
       var height = document.querySelector('body').clientHeight + 75;
+      var modal = document.querySelector('modal-container');
 
       //if page accessed from the left nav of Canvas, add 1000px of extra space to
       //ensure that we don't have scroll bars (since there is nothing below the
@@ -419,6 +422,11 @@ export class UtilitiesService {
       //cause problems if even off by a few pixels due to small UI actions)
       if (this.isLti) {
         height = document.querySelector('body').clientHeight + 1000;
+      }
+
+      //modal height exists outside of the body, unfortunately, so scroll bars appear if not selected
+      if (modal) {
+        height = modal.clientHeight + 75;
       }
 
       //in some cases, such as in the results view, there is lazy loading on scroll;

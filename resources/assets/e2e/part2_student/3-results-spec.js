@@ -17,7 +17,6 @@ describe('Viewing results as a student', function() {
         it('should show a list of all released quizzes where the student had made at least one attempt', async function() {
             await common.switchToCanvas();
             await common.goToQuickCheck();
-            await common.enterAngularPage();
 
             releases = studentHomePage.getReleases();
             expect(await releases.count()).toBe(3);

@@ -23,7 +23,7 @@
             "polyfills": "resources/assets/src/polyfills.ts",
             "tsConfig": "tsconfig.app.json",
             "deployUrl": "/assets/dist/",
-            "aot": false,
+            "aot": true,
             "assets": [
               {
                 "glob": "**/*",
@@ -80,7 +80,6 @@
               "sourceMap": false,
               "extractCss": true,
               "namedChunks": false,
-              "aot": true,
               "extractLicenses": true,
               "vendorChunk": false,
               "buildOptimizer": true,
@@ -109,7 +108,6 @@
               "sourceMap": false,
               "extractCss": true,
               "namedChunks": false,
-              "aot": true,
               "extractLicenses": true,
               "vendorChunk": false,
               "buildOptimizer": true,
@@ -191,5 +189,8 @@
       }
     }
   },
-  "defaultProject": "quickcheck"
+  "defaultProject": "quickcheck",
+  "cli": {
+    "analytics": "aee00c48-91b1-4edd-95db-197a7593ce6c"
+  }
 }

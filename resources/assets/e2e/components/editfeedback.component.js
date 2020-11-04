@@ -44,9 +44,7 @@ var EditFeedbackComponent = function(browserRef, question) {
     }
 
     async function deleteFeedback() {
-        await component.browser.sleep(500); //1/08/17: recent protractor issues require workarounds
         await component.deleteFeedbackBtn.click();
-        await component.browser.sleep(500); //was throwing an error without this
     }
 
     async function enterResponseFeedback(option, text) {

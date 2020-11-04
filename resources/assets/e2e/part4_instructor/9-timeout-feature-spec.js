@@ -7,7 +7,9 @@ var includes = require('../common/includes.js'),
 
 describe('Taking an assessment with the timeout feature turned on', function() {
     it('should not show a timeout message initially', async function() {
-        await common.switchToCanvas();
+        await common.closeTab(1);
+        await common.switchTab(0);
+        await common.enterNonAngularPage();
         await canvasAssignmentsPage.goToStudentView();
         await canvasAssignmentsPage.goToAssignments();
         await canvasAssignmentsPage.openAssignment(data.sets.featuresAllOn.quickchecks.featuresAllOn);

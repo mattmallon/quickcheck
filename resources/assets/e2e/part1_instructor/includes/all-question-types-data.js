@@ -203,21 +203,21 @@ function AllQuestionTypesData() {
                 matchingPairInputs,
                 feedbackPanel;
 
-            beforeEach(async function() {
+            beforeEach(function() {
                 question = editQcPage.getQuestion(4);
                 questionData = data.quizData.quiz1.question5;
                 distractors = question.getDistractors();
-                dropdownPrompts = await question.getDropdownPrompts();
-                dropdownInputs = await question.getDropdownTextInputs();
+                dropdownPrompts = question.getDropdownPrompts();
+                dropdownInputs = question.getDropdownTextInputs();
                 feedbackPanel = question.feedback.getFeedbackPanel();
             });
 
             it('should show the correct answer options', async function() {
-                expect(await dropdownPrompts.length).toBe(2);
-                expect(await dropdownInputs[0].getAttribute('value')).toBe(questionData.prompt1);
-                expect(await dropdownInputs[1].getAttribute('value')).toBe(questionData.answer1);
-                expect(await dropdownInputs[2].getAttribute('value')).toBe(questionData.prompt2);
-                expect(await dropdownInputs[3].getAttribute('value')).toBe(questionData.answer2);
+                expect(await dropdownPrompts.count()).toBe(2);
+                expect(await dropdownInputs.get(0).getAttribute('value')).toBe(questionData.prompt1);
+                expect(await dropdownInputs.get(1).getAttribute('value')).toBe(questionData.answer1);
+                expect(await dropdownInputs.get(2).getAttribute('value')).toBe(questionData.prompt2);
+                expect(await dropdownInputs.get(3).getAttribute('value')).toBe(questionData.answer2);
             });
 
             it('should show the correct distractors', async function() {

@@ -25,7 +25,6 @@ describe('Making a quick check a custom activity', function() {
         goToSetBtn = viewSetsPage.getGoToSetBtn(set);
         await common.scrollToElement(goToSetBtn);
         await goToSetBtn.click();
-        await browser3.sleep(1000);
         await setPage.initSubsets();
         subset = setPage.getSubset(0);
         await subset.addAndSaveQuickCheck(data.sets.featuresAllOn.quickchecks.custom);
@@ -85,7 +84,7 @@ describe('Making a quick check a custom activity', function() {
         quickcheck = subset.getQuickChecks().last();
         await subset.previewQuickCheck(quickcheck);
         await common.enterNonAngularPage();
-        await common.switchTab(1);
+        await common.switchTab(2);
         expect(await browser3.driver.getCurrentUrl()).toContain(customData.url);
     });
 });
@@ -94,6 +93,8 @@ describe('Embedding and taking a custom activity', function() {
     var customData = data.customActivity;
 
     it('should only show personal memberships for admins in the select panel at first', async function() {
+        await browser3.close();
+        await common.switchTab(1);
         await browser3.close();
         await common.switchTab(0);
         await canvasAssignmentsPage.createAssignmentAndOpenEmbed(customData.name, '1');
@@ -149,10 +150,8 @@ describe('Embedding and taking a custom activity', function() {
     it('should show the attempt data correctly in the results view', async function() {
         var assessmentName = data.sets.featuresAllOn.quickchecks.custom;
 
-        await common.enterAngularPage();
         await homePage.nav.goToResults();
         await attemptOverviewPage.getAssessmentByName(assessmentName).click();
-        await browser3.sleep(1000);
         expect(await attemptsPage.attempts.getCorrect(0)).toBe('1');
         expect(await attemptsPage.attempts.getIncorrect(0)).toBe('1');
         expect(await attemptsPage.attempts.getScore(0)).toBe('10%');

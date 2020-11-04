@@ -64,7 +64,6 @@ var HomePage = function(browserRef) {
     async function saveNewQuickCheck(quickCheckName) {
         await page.newQuickCheckInput.sendKeys(quickCheckName);
         await page.saveBtn.click();
-        await page.browser.sleep(2000);
     }
 
     async function selectNewSet() {

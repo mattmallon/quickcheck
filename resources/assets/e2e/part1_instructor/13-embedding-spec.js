@@ -11,7 +11,9 @@ describe('Embedding assessments', function() {
         var qcName = data.sets.featuresAllOn.quickchecks.featuresAllOn,
             setNames = [ data.sets.featuresAllOn.name, data.sets.featuresAllOff.name ];
 
-        await common.switchToCanvas();
+        await common.closeTab(1);
+        await common.switchTab(0);
+        await common.enterNonAngularPage();
         //set due date to last day of year (if we just specify a string date that's month-specific, Canvas will assume this year)
         await canvasAssignmentsPage.createAssignmentAndOpenEmbed(qcName, '7', 'Dec 30');
         await common.enterAngularPage();

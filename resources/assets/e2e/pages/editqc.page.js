@@ -63,30 +63,19 @@ var EditQcPage = function(browserRef) {
 
     async function addQuestion(questionType) {
         var newQuestion,
-            updatedQuestionCount,
             questionCount,
             questionObject;
 
-        questionCount = await page.getQuestions().count();
         await page.addQuestionBtn.click();
-        updatedQuestionCount = await page.getQuestions().count();
+        questionCount = await page.getQuestions().count();
 
-        //intermittent issues with clicking the button and a new question not showing up? UGH, PROTRACTOR.
-        if (questionCount === updatedQuestionCount) {
-            await page.addQuestionBtn.click();
-        }
-
-        newQuestion = page.getQuestions().get(questionCount);
+        newQuestion = page.getQuestions().get(questionCount - 1);
         questionObject = new page.includes.EditQuestionComponent(page.browser, newQuestion, questionType);
         //set the question type in the dropdown, but not multiple choice, since that's the default, and
         //changing the question type removes current options, requiring us to re-add what's already there
         if (questionType && questionType !== page.includes.data.questionTypes.mc) {
             await questionObject.setQuestionType(questionType);
-            //await browser.sleep(1000); //testing to see if this improves intermittent errors
-            //it seems to be that the issue sometimes is a button is clicked and yet nothing happens when trying to
-            //add a matching/numerical option, etc. attempting to scroll to bottom of page to see if that helps?
-            //await page.browser.executeScript('window.scrollTo(0,document.body.scrollHeight)');
-            //testing: wait for tinymce iframe to load, maybe it's throwing off where protractor is clicking?
+            //make sure tinymce assets are fully loaded in question so click events hit the right spots
             await page.common.waitForTinyMce(newQuestion);
             await page.browser.sleep(500); //for good measure, still had intermittent issues
         }
@@ -179,13 +168,11 @@ var EditQcPage = function(browserRef) {
 
     async function goBack() {
         await page.backBtn.click();
-        //await page.browser.sleep(1000);
     }
 
     async function goBackToSet() {
         await page.waitForSaveSuccess();
         await page.goBackToSetLink.click();
-        //await page.browser.sleep(1000);
     }
 
     async function initQuestions() {

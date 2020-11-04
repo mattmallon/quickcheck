@@ -12,7 +12,6 @@ describe('Toggling ungraded assessments', function() {
             assessmentName = data.sets.featuresAllOff.quickchecks.featuresAllOffPastDue;
 
         await attemptOverviewPage.getAssessmentByName(assessmentName).click();
-        await browser.sleep(1000);
 
         attemptsVisible = await attemptsPage.attempts.getAttemptsVisible();
         expect(attemptsVisible.length).toBe(6);
@@ -96,7 +95,6 @@ describe('Auto-grading an assessment', function() {
             assessmentName = data.sets.featuresAllOff.quickchecks.resultsNotReleased;
 
         await attemptOverviewPage.getAssessmentByName(assessmentName).click();
-        await browser.sleep(2000);
         await attemptsPage.autoGrade();
         const gradeLink = await attemptsPage.attempts.getEditGradeLink(attemptIndex);
         expect(await gradeLink.getText()).toContain('0');

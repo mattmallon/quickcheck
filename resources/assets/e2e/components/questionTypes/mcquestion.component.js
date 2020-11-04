@@ -15,6 +15,7 @@ var McQuestionComponent = function(browserRef, question) {
     component.enterMcTextOption = enterMcTextOption;
     component.getMcOptionInputValue = getMcOptionInputValue;
     component.getOptionInput = getOptionInput;
+    component.getOptionToggleCorrect = getOptionToggleCorrect;
     component.isMcOptionMarkedCorrect = isMcOptionMarkedCorrect;
     component.toggleMcOptionCorrect = toggleMcOptionCorrect;
 
@@ -32,6 +33,10 @@ var McQuestionComponent = function(browserRef, question) {
 
     function getOptionInput(option) {
         return option.element(by.css(component.inputElement));
+    }
+
+    function getOptionToggleCorrect(option) {
+        return option.element(by.css(component.mcMarkCorrectClass));
     }
 
     async function isMcOptionMarkedCorrect(option) {

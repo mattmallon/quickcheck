@@ -14,11 +14,9 @@ describe('Releasing results', function() {
     it('should show all assessments in the results view, because attempts were made by an instructor viewing the quiz', async function() {
         var assessmentName = data.sets.featuresAllOn.quickchecks.featuresAllOn;
         await common.goToQuickCheck();
-        await common.enterAngularPage();
         await homePage.nav.goToResults();
         expect(await attemptOverviewPage.getAttempts().count()).toBe(5);
         await attemptOverviewPage.getAssessmentByName(assessmentName).click();
-        await browser.sleep(1000);
     });
 
     it('should initially have a button to release results, since they have not been released yet', async function() {
@@ -49,7 +47,6 @@ describe('Releasing results', function() {
         var assessmentName = data.sets.featuresAllOff.quickchecks.urlEmbed;
         await attemptsPage.goBack();
         await attemptOverviewPage.getAssessmentByName(assessmentName).click();
-        await browser.sleep(1000);
         await attemptsPage.toggleRelease();
         expect(await attemptsPage.isRollbackBtnDisplayed()).toBe(true);
         await attemptsPage.goBack();
@@ -58,7 +55,6 @@ describe('Releasing results', function() {
     it('should release the third quiz\'s attempt results', async function() {
         var assessmentName = data.sets.featuresAllOff.quickchecks.featuresAllOffPastDue;
         await attemptOverviewPage.getAssessmentByName(assessmentName).click();
-        await browser.sleep(1000);
         await attemptsPage.toggleRelease();
         expect(await attemptsPage.isRollbackBtnDisplayed()).toBe(true);
         //set up for when we next come back as instructor

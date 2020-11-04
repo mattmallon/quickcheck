@@ -68,7 +68,6 @@ var AttemptsPage = function(browserRef) {
         //9/27/19: sometimes tests fail because link supposedly clicked but nothing happened, trying scrolling to fix
         await page.common.scrollToElement(page.goBackLink);
         await page.goBackLink.click();
-        await page.browser.sleep(1500);
     }
 
     async function isReleaseBtnDisplayed() {

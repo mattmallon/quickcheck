@@ -12,7 +12,10 @@ describe('An admin viewing the sets home page', function() {
     it('should see no sets initially because the admin has not personally created any', async function() {
         await common.enterNonAngularPage();
         await canvasLoginPage.login(creds.admin.username, creds.admin.password);
-        await browser3.sleep(2000); //for some reason angular wasn't waiting, failed all tests, even though it works fine for instructor? argh.
+        //for some reason angular wasn't waiting, failed all tests, even though it works fine for instructor? argh.
+        //did run into some similar issues for the student tests, though, so implementing something similar here.
+        await common.enterNonAngularPage();
+        await browser3.sleep(5000);
         await common.goToQuickCheck();
         await common.enterAngularPage();
         await homePage.nav.goToSets();

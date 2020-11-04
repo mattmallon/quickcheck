@@ -148,8 +148,6 @@ var EditQuestionComponent = function(browserRef, question, questionType) {
 
     async function setQuestionType(questionType) {
         await component.questionTypeDropdown.element(by.cssContainingText('option', questionType)).click();
-        //await component.questionTypeDropdown.sendKeys(questionType);
-        //await component.browser.sleep(500); //Protractor doesn't always catch up right away...
     }
 
     async function toggleRandomized() {

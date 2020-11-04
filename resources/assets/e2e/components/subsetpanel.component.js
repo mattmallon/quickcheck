@@ -94,7 +94,6 @@ var SubsetPanelComponent = function(browserRef, subsetElement) {
 
     async function editQuickCheck(quickCheck) {
         await quickCheck.element(by.css(component.editQcBtn)).click();
-        await component.browser.sleep(1000);
     }
 
     async function editSubset() {

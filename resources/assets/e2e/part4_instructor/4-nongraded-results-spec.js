@@ -11,7 +11,6 @@ describe('Viewing an assessment that was embedded as an external tool URL', func
     it('should show a message that the quick check is ungraded', async function() {
         var assessmentName = data.sets.featuresAllOff.quickchecks.urlEmbed;
         await attemptOverviewPage.getAssessmentByName(assessmentName).click();
-        await browser.sleep(1000);
         expect(await attemptsPage.getGradingMessage()).toContain('UNGRADED');
     });
 

@@ -13,7 +13,7 @@ class StudentMatchingResponse extends StudentResponseType {
     protected $casts = [
         'student_response_id' => 'integer',
         'matching_prompt_id' => 'integer',
-        'matching_answer_id' => 'ineger'
+        'matching_answer_id' => 'integer'
     ];
     private $RESPONSE_TYPE = 'matching_responses';
     private $QUESTION_TYPE = 'matching';

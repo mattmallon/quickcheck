@@ -166,7 +166,7 @@ export class ManageService {
   }
 
   async submitGrade(data) {
-    const timeoutLength = this.httpService.getMediumTimeout();
+    const timeoutLength = this.httpService.getLongTimeout();
     const path = this.httpService.getApiRoute() + '/attempts/gradepassback';
 
     return await this.httpClient.post(path, data, this.httpOptions)

@@ -101,6 +101,26 @@ class UserController extends \BaseController
         return response()->success(['apiToken' => $apiToken]);
     }
 
+
+    /**
+    * Ensure that user does not have third party cookies blocked
+    *
+    * @return JSON response
+    */
+
+    public function checkCookies(Request $request)
+    {
+        $sessionData = $request->session()->all();
+
+        //a "_token" value will be set on subsequent requests even if cookies are disabled,
+        //so we're checking to make sure that more than just "_token" is set in the session
+        if (count($sessionData) > 1) {
+            return response()->success();
+        }
+
+        return response()->error(400, ['Third party cookies disabled.']);
+    }
+
     /**
     * Return all users in a course from Canvas (to ensure grade passback can be achieved for student)
     *

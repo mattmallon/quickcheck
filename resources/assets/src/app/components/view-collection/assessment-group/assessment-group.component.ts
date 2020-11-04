@@ -18,7 +18,7 @@ export class AssessmentGroupComponent implements OnInit {
   @Output() onAssessmentCopy = new EventEmitter();
   @Output() onDelete = new EventEmitter();
 
-  editingData = cloneDeep(this.assessmentGroup);
+  editingData = null;
   focusEditAssessmentGroup = '';
   focusNewAssessment = '';
   focusSaveAssessment = '';
@@ -41,6 +41,9 @@ export class AssessmentGroupComponent implements OnInit {
     if (!this.assessmentGroup.assessments) {
       this.assessmentGroup.assessments = [];
     }
+
+    //initialize copied data for editing, so in-progress, unsaved edits don't change the UI
+    this.editingData = cloneDeep(this.assessmentGroup)
 
     this.utilitiesService.setLtiHeight();
   }

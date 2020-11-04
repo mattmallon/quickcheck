@@ -19,7 +19,6 @@ var NavComponent = function(browserRef) {
         if (!await homepage.isPresent()) {
             await component.homeLink.click();
         }
-        //await component.browser.sleep(1500); //added on 1/4/18, angular started having issues with redirects
     }
 
     async function goToResults() {
@@ -29,7 +28,6 @@ var NavComponent = function(browserRef) {
         if (!await resultspage.isPresent()) {
             await component.resultsLink.click();
         }
-        //await component.browser.sleep(1500);
     }
 
     async function goToSets() {
@@ -39,7 +37,6 @@ var NavComponent = function(browserRef) {
         if (!await setspage.isPresent()) {
             await component.setsLink.click();
         }
-        //await component.browser.sleep(1500);
     }
 };
 

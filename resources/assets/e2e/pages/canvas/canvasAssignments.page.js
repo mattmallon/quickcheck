@@ -103,6 +103,7 @@ var CanvasAssignmentsPage = function(browserRef) {
         await link.click();
         ltiContent = page.browser.element(by.css(page.ltiContent));
         await page.browser.wait(EC.presenceOf(ltiContent), page.maxWait);
+        await page.browser.wait(EC.visibilityOf(ltiContent), page.maxWait);
     }
 
     async function saveEmbed() {

@@ -293,7 +293,7 @@ class CanvasAPI
     {
         $errorMessage = '';
 
-        if (!$response) {
+        if ($response === null || $response === false || $response === '') {
             return 'No response returned from Canvas. Canvas servers may be experiencing issues.';
         }
 

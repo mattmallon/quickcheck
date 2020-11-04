@@ -32,7 +32,6 @@ describe('Joining a public set', function() {
         var viewBtn = viewSetsPage.getPublicViewBtn(publicSet);
         expect(await viewBtn.isDisplayed()).toBe(true);
         await viewBtn.click();
-        await browser.sleep(1000);
     });
 });
 

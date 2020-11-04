@@ -42,7 +42,6 @@ describe('Reviewing individual results from the attempts overview page', functio
 describe('Viewing results for an individual student', function() {
     it('should show all quick checks attempted by the student', async function() {
         await attemptOverviewPage.getStudents().get(1).click();
-        await browser.sleep(2000); //wait for angular to load when moving to new page
         expect(await studentResultsPage.getQuickChecks().count()).toBe(5);
     });
 

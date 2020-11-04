@@ -72,9 +72,6 @@ describe('Taking a manually graded quiz past the due date', function() {
         await qcPage.submit();
         expect(await qcPage.isCorrectModal()).toBe(true);
         await qcPage.clickContinue();
-        //GAH! using EC.visibilityOf resulted in timeouts even though the element
-        //was clearly visible. I have no choice but to just manually call sleep.
-        //browser2.sleep(1000);
         await qcPage.restart();
     });
 
@@ -84,7 +81,6 @@ describe('Taking a manually graded quiz past the due date', function() {
         await qcPage.submit();
         expect(await qcPage.isCorrectModal()).toBe(true);
         await qcPage.clickContinue();
-        //browser2.sleep(1000);
         await qcPage.restart();
     });
 
@@ -93,7 +89,6 @@ describe('Taking a manually graded quiz past the due date', function() {
         await qcPage.submit();
         expect(await qcPage.isCorrectModal()).toBe(true);
         await qcPage.clickContinue();
-        //browser2.sleep(1000);
         await qcPage.restart();
     });
 

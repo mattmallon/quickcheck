@@ -66,8 +66,6 @@ describe('Adding a subset and quick check from the home page', function() {
         await question.enterMcTextOption(options.get(1), 'B');
         await question.enterMcTextOption(options.get(2), 'C');
         await question.enterMcTextOption(options.get(3), 'D');
-        //for some god-forsaken reason, intermittent issues clicking the button, even with other measures in place to wait for load
-        await browser3.sleep(1000);
         correctOption = options.get(0);
         await question.toggleMcOptionCorrect(correctOption);
         await editQcPage.save();
@@ -93,7 +91,6 @@ describe('Making a set public', function() {
         goToSetBtn = viewSetsPage.getGoToSetBtn(set);
         await common.scrollToElement(goToSetBtn);
         await goToSetBtn.click();
-        await browser3.sleep(1000);
         toggleBtn = await setPage.getTogglePublicBtn();
         expect(await toggleBtn.isDisplayed()).toBe(true);
         expect(await toggleBtn.getText()).toContain('MAKE SET PUBLIC');

@@ -22,6 +22,8 @@ The application can be run within a docker container or locally in a LAMP enviro
 2. Once built, the image can be run with the following command (replacing PATH_TO_APP with the absolute path to the application on your local filesystem, and assuming that the default port of 8000 is being used): `docker run -p 8000:80 -v PATH_TO_APP:/var/www/html:delegated -v /var/www/html/node_modules -v /var/www/html/vendor -v /var/www/html/public/assets/dist --rm quickcheck:1.0`
   -The `-v` flags are for mapping volumes from your local system to the docker container. The first volume argument allows for making changes to the code in your local filesystem and having the changes reflected inside the docker container. The remaining volume arguments ensure that all dependencies are isolated within the docker container instead of being on the local filesystem.
 3. One-time setup is required for the app key and database: `exec` inside the running container, and run `php artisan key:generate` to generate an app key. (Alternatively, the command can be passed as the last argument to the `run` command to pass to the container on startup.)
+  -To `exec` into the container, start the container and run `docker ps` to get the container ID
+  -Replacing `CONTAINER_ID` with the actual value, run the command: `docker exec -it CONTAINER_ID sh`
 4. Next, run `php artisan migrate --seed` to run database migrations/seeds.
 5. The application should be ready and available at localhost:8000.
 

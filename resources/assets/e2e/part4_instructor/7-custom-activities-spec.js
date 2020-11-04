@@ -16,7 +16,6 @@ describe('Viewing assessments that are custom activities', function() {
         //custom activity is first set, first subset, first quick check
         set = viewSetspage.getMembershipTiles().first();
         await viewSetspage.getGoToSetBtn(set).click();
-        await browser.sleep(1000);
         await setPage.initSubsets();
         subset = setPage.getSubset(0);
         quickcheck = subset.getQuickChecks().get(0);

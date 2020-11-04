@@ -17,7 +17,6 @@ describe('Navigating to the tool in Canvas', function () {
 
     it('should reach the assessment home page when the tool is clicked', async function () {
         await common.goToQuickCheck();
-        await common.enterAngularPage();
         const header = await homePage.getHeader();
         expect(header).toContain('QUICK CHECK');
     });

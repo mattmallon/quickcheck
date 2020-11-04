@@ -207,12 +207,6 @@ import { SelectAssessmentComponent } from './components/select/select-assessment
     RoundProgressModule,
     RouterModule
   ],
-  entryComponents: [
-      CompletionModalComponent,
-      ErrorModalComponent,
-      FeedbackModalComponent,
-      TimeoutModalComponent
-  ],
   providers: [
       HttpClientModule,
       Title,

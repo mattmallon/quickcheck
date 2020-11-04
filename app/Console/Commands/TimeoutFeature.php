@@ -47,7 +47,7 @@ class TimeoutFeature extends Command
         }
 
         $this->addFeature();
-        return;
+        return 0;
     }
 
     private function addFeature() {

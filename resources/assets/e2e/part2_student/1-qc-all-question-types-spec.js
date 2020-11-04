@@ -19,7 +19,9 @@ describe('Navigating to the quick check', function() {
         await common.enterNonAngularPage();
         await canvasLoginPage.login(creds.student.username, creds.student.password);
         await common.enterNonAngularPage(); //9/26/19: for some reason protractor needed this a second time, otherwise failed right away
+        await browser2.sleep(5000); //MM, 10/28/20: intermittent failures here from page not loading yet, give it time
         await canvasAssignmentsPage.goToAssignments();
+        await browser2.sleep(5000); //MM, 10/28/20: intermittent failures here from page not loading yet, give it time
         await canvasAssignmentsPage.openAssignment(qcName);
     });
 

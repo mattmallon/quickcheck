@@ -41,5 +41,8 @@ describe('Deleting a collection', function () {
         //server over again
         await browser.refresh();
         expect(await viewSetsPage.getMembershipTiles().count()).toBe(0);
+
+        //set up for next test
+        await viewSetsPage.nav.goToHome();
     });
 });

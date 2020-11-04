@@ -111,7 +111,6 @@ describe('Viewing past due assignments', function() {
         await attemptsPage.responses.goBack();
         await attemptsPage.goBack();
         await attemptOverviewPage.getAssessmentByName(assessmentName).click();
-        await browser.sleep(1000);
 
         for(i = 0; i < 3; i++) {
             expect(await attemptsPage.attempts.isPastDue(i)).toBe(true);
@@ -137,6 +136,5 @@ describe('Viewing attempts when the feature to hide empty attempts is turned off
         //set up for next test
         await attemptsPage.goBack();
         await attemptOverviewPage.getAssessmentByName(assessmentName).click();
-        await browser.sleep(1000);
     });
 });

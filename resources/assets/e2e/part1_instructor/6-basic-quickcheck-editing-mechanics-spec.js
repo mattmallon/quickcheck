@@ -95,7 +95,8 @@ describe('Deleting a question', function() {
 describe('Using the rich content editor toggle', function() {
     var option,
         question,
-        submittedText = 'Test content, will be deleted.';
+        submittedText = 'Test content, will be deleted.',
+        richText = '<p>' + submittedText + '</p>';
 
     describe('in a multiple choice question', function() {
         beforeEach(function() {
@@ -138,7 +139,7 @@ describe('Using the rich content editor toggle', function() {
         });
 
         it('should retain existing information when the toggle is disabled', async function() {
-            expect(await question.getMcOptionInputValue(option)).toBe(submittedText);
+            expect(await question.getMcOptionInputValue(option)).toBe(richText);
             //initialize for next round of tests
             await editQcPage.addQuestion(data.questionTypes.mcorrect);
             await editQcPage.initQuestions();
@@ -186,7 +187,7 @@ describe('Using the rich content editor toggle', function() {
         });
 
         it('should retain existing information when the toggle is disabled', async function() {
-            expect(await question.getMcOptionInputValue(option)).toBe(submittedText);
+            expect(await question.getMcOptionInputValue(option)).toBe(richText);
         });
     });
 
@@ -312,7 +313,6 @@ describe('Reordering questions', function() {
         //re-init questions to make sure they're composed properly
         await editQcPage.initQuestions();
         movedQuestion = editQcPage.getQuestion(0);
-        //await browser.sleep(29000);
         expect(await movedQuestion.getQuestionType()).toBe(data.questionTypes.numerical);
     });
 

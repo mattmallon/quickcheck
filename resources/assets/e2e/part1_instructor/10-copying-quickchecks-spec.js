@@ -14,13 +14,9 @@ describe('Copying a quick check', function() {
 
     it('should display the correct form when the copy button is clicked', async function() {
         //navigate to set.
-        //open in new tab so we can delete the copied QC without protractor
-        //freaking out over a confirm that appears in an iframe
-        await browser.sleep(1000); //was running into error because page was not fully loaded
         await setPage.nav.goToSets();
         set = viewSetsPage.getMembershipTiles().first();
-        await viewSetsPage.getGoToSetNewTabBtn(set).click();
-        await common.switchTab(1);
+        await viewSetsPage.getGoToSetBtn(set).click();
 
         await setPage.initSubsets();
         subset = setPage.getSubset(1);
@@ -67,7 +63,6 @@ describe('Copying a quick check', function() {
 
         //next, click the button to edit
         await editBtn.click();
-        await browser.sleep(1000);
     });
 });
 
@@ -85,13 +80,8 @@ describe('Copying a quick check should keep the data intact', function() {
         quickCheck = subset.getQuickChecks().get(1);
         await subset.deleteQuickCheck(quickCheck);
         await common.acceptAlert(browser);
-        await common.closeTab();
-        await common.switchTab(0);
-        await common.enterNonAngularPage();
-        await common.switchToLtiTool();
-        await common.enterAngularPage();
+        await setPage.nav.goToSets();
         set = viewSetsPage.getMembershipTiles().first();
         await viewSetsPage.getGoToSetBtn(set).click();
-        await browser.sleep(1000);
     });
 });
