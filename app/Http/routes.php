@@ -25,8 +25,8 @@ Route::get('assessment/{id?}', 'AssessmentController@show'); //option to include
 Route::post('assessment/', 'AssessmentController@showLTI'); //id included as query param for LTI tool
 
 //LTI config
-Route::get('lticonfig', 'HomeController@returnLtiConfig');
-Route::post('logininitiations', 'HomeController@initializeOIDC');
+Route::get('lticonfig', 'LtiController@returnLtiConfig');
+Route::post('logininitiations', 'LtiController@initializeOIDC');
 
 //Student results and instructor management views;
 //with session-less architecture, these need to be public.

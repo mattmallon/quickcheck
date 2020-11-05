@@ -26,12 +26,28 @@ class LtiContext {
     /* PUBLIC FUNCTIONS *****************************************************/
     /************************************************************************/
 
-    public function createLineItem($lineItemsUrl, $scoreMaximum = 0, $label = 'Quick Check next 2')
+    /**
+    * Create a line item (which will generate an assignment in Canvas)
+    *
+    * @param  string $lineItemsUrl
+    * @param  int    $scoreMaximum
+    * @param  string $label
+    * @return []     $result (data converted to associative array from JSON)
+    */
+
+    public function createLineItem($lineItemsUrl, $scoreMaximum = 0, $label = 'Quick Check')
     {
         $lti = new LTIAdvantage();
         $result = $lti->createLineItem($lineItemsUrl, $scoreMaximum, $label);
         return $result;
     }
+
+    /**
+    * Get all line items (gradeable assignments) for the course
+    *
+    * @param  string $lineItemsUrl
+    * @return []     $result (data converted to associative array from JSON)
+    */
 
     public function getAllLineItems($lineItemsUrl)
     {
@@ -39,6 +55,12 @@ class LtiContext {
         $result = $lti->getAllLineItems($lineItemsUrl);
         return $result;
     }
+
+    /**
+    * From the initial launch params passed along in the request, retrieve assignment ID
+    *
+    * @return int
+    */
 
     public function getAssignmentId()
     {
@@ -53,6 +75,12 @@ class LtiContext {
 
         return $assignmentId;
     }
+
+    /**
+    * From the initial launch params passed along in the request, retrieve assignment title
+    *
+    * @return string
+    */
 
     public function getAssignmentTitle()
     {
@@ -133,6 +161,12 @@ class LtiContext {
         return $deepLinkSettings->deep_link_return_url;
     }
 
+    /**
+    * From the initial launch params passed along in the request, retrieve deployment ID
+    *
+    * @return string
+    */
+
     public function getDeploymentId()
     {
         if (!$this->launchValues) {
@@ -204,6 +238,13 @@ class LtiContext {
         return $this->launchValues;
     }
 
+    /**
+    * The first step of the LTI launch: Canvas sends params to our tool and we need to redirect back
+    *
+    * @param  string $lineItemUrl
+    * @return []     $data (data converted to associative array from JSON)
+    */
+
     public function getLineItem($lineItemUrl)
     {
         $lti = new LTIAdvantage();
@@ -211,6 +252,12 @@ class LtiContext {
 
         return $data;
     }
+
+    /**
+    * From the initial launch params passed along in the request, retrieve line item URL
+    *
+    * @return string
+    */
 
     public function getLineItemUrl()
     {
@@ -226,6 +273,13 @@ class LtiContext {
         return $urls->lineitem;
     }
 
+    /**
+    * Use names and roles provisioning service to retrieve all course memberships
+    *
+    * @param  string $membershipsUrl
+    * @return []     $result (data converted to associative array from JSON)
+    */
+
     public function getMemberships($membershipsUrl)
     {
         $lti = new LTIAdvantage();
@@ -236,7 +290,6 @@ class LtiContext {
     /**
     * Get the nonce for the current launch
     *
-    * @param  int  $assessmentId
     * @return string
     */
 
@@ -248,6 +301,12 @@ class LtiContext {
 
         return $this->launchValues['nonce'];
     }
+
+    /**
+    * From the initial launch params passed along in the request, retrieve names and role provisioning service link
+    *
+    * @return string
+    */
 
     public function getNRPSLink()
     {
@@ -273,6 +332,12 @@ class LtiContext {
         return $this->launchValues[$this->lisKey]->person_sourcedid;
     }
 
+    /**
+    * From the initial launch params passed along in the request, retrieve assignment points possible
+    *
+    * @return int
+    */
+
     public function getPointsPossible()
     {
         if (!$this->launchValues) {
@@ -296,6 +361,14 @@ class LtiContext {
 
         return $this->launchValues[$this->resourceLinkKey]->id;
     }
+
+    /**
+    * Get the result of a line item for a specific student
+    *
+    * @param  string $lineItemUrl
+    * @param  int    $userId
+    * @return []     $result (data converted to associative array from JSON)
+    */
 
     public function getResult($lineItemUrl, $userId)
     {

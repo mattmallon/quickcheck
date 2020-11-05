@@ -23,14 +23,23 @@ class LTIAdvantage {
     public $launchValues;
     public $valid = false;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->request = request();
     }
 
-    public function buildOIDCRedirectUrl() {
+    /**
+    * The first step of the LTI launch: Canvas sends params to our tool and we need to redirect back
+    * to Canvas with the parameters attached so that the LTI launch can be authenticated.
+    *
+    * @return string
+    */
+
+    public function buildOIDCRedirectUrl()
+    {
         $iss = $this->request->input('iss');
         $loginHint = $this->request->input('login_hint');
-        //NOTE: the target link uri is specific to the resource, so if launching from nav, it's the nav launch url
+        //NOTE: the target link uri is specific to the resource, so if launching from nav, it's the nav launch url, etc.
         //rather than the default target link uri set on the tool, so that's good news.
         $targetLinkUri = $this->request->input('target_link_uri');
         $ltiMessageHint = $this->request->input('lti_message_hint');
@@ -106,6 +115,16 @@ class LTIAdvantage {
         throw new GradePassbackException($errorMessage);
     }
 
+    /**
+    * In order to send a deep linking request to Canvas to embed a Quick Check, we need to send
+    * a JWT with the pertinent information in a specific format.
+    *
+    * @param  string $deploymentId
+    * @param  string $launchUrl
+    * @param  string $title
+    * @return string $JWT
+    */
+
     public function createDeepLinkingJwt($deploymentId, $launchUrl, $title)
     {
         $this->iss = $this->getIssuer();
@@ -137,6 +156,15 @@ class LTIAdvantage {
         return $jwt;
     }
 
+    /**
+    * Create a line item (assignment) in the Canvas gradebook
+    *
+    * @param  string $lineItemsUrl
+    * @param  int    $scoreMaximum
+    * @param  string $label
+    * @return []     $data (data converted to associative array from JSON)
+    */
+
     public function createLineItem($lineItemsUrl, $scoreMaximum, $label)
     {
         $this->initOauthToken();
@@ -151,7 +179,14 @@ class LTIAdvantage {
         return $data;
     }
 
-    public function decodeLaunchJwt() {
+    /**
+    * After the OIDC redirect, verify the jwt signature and decode the values
+    *
+    * @return void
+    */
+
+    public function decodeLaunchJwt()
+    {
         $rawJwt = $this->request->get('id_token');
         if (!$rawJwt) {
             abort(400, 'LTI launch error: JWT id token missing.');
@@ -172,8 +207,15 @@ class LTIAdvantage {
         //library checks the signature, makes sure it isn't expired, etc.
         $decodedJwt = JWT::decode($rawJwt, $this->publicKey, ['RS256']);
         $this->launchValues = (array) $decodedJwt; //returns object; coerce into array
-        //dd($this->launchValues);
+        //dd($this->launchValues); //un-comment for debugging, to see launch values
     }
+
+    /**
+    * Get all line items for the course
+    *
+    * @param  string $response
+    * @return  []    $data (data converted to associative array from JSON)
+    */
 
     public function getAllLineItems($lineItemsUrl)
     {
@@ -187,6 +229,12 @@ class LTIAdvantage {
 
         return $data;
     }
+
+    /**
+    * Get the issuer of the JWT (i.e., canvas test, canvas prod, etc.) from the JWT launch data
+    *
+    * @return string
+    */
 
     public function getIssuer()
     {
@@ -208,9 +256,23 @@ class LTIAdvantage {
         return $iss;
     }
 
-    public function getLaunchValues() {
+    /**
+    * Get all decoded LTI launch values for the user's launch
+    *
+    * @return []
+    */
+
+    public function getLaunchValues()
+    {
         return (array) $this->launchValues;
     }
+
+    /**
+    * Get a single line item
+    *
+    * @param  string $lineItemUrl
+    * @return []     $data (data converted to associative array from JSON)
+    */
 
     public function getLineItem($lineItemUrl)
     {
@@ -224,6 +286,12 @@ class LTIAdvantage {
 
         return $data;
     }
+    /**
+    * Get all memberships in the course from the names and roles provisioning service
+    *
+    * @param  string $membershipsUrl
+    * @return []    $data (data converted to associative array from JSON)
+    */
 
     public function getMemberships($membershipsUrl)
     {
@@ -238,7 +306,16 @@ class LTIAdvantage {
         return $data;
     }
 
-    public function getResult($lineItemUrl, $userId) {
+    /**
+    * Get a student's result for a line item (numeric score, possibly null if un-attempted or if not a student)
+    *
+    * @param  string $lineItemUrl
+    * @param  int    $userId
+    * @return int (nullable)
+    */
+
+    public function getResult($lineItemUrl, $userId)
+    {
         $this->initOauthToken();
         if (!$this->oauthHeader) {
             abort(500, 'Oauth token not set on user.');
@@ -259,31 +336,20 @@ class LTIAdvantage {
         $score = null;
 
         if (array_key_exists('resultScore', $result)) {
-            //$resultScore = $result['resultScore'];
             return $result['resultScore'];
         }
-
-        // if (array_key_exists('resultMaximum', $result)) {
-        //     $resultMaximum = $result['resultMaximum'];
-        // }
-
-        // //use isset instead of boolean because a score of 0 would equate to false
-        // if (isset($resultScore) && isset($resultMaximum)) {
-        //     //just in case the point value is 0, want to prevent division by 0 error
-        //     if ($resultMaximum === 0) {
-        //         return 0;
-        //     }
-
-        //     $score = $resultScore / $resultMaximum;
-        // }
-
-        // return $score;
 
         return null;
     }
 
-    public function getOauthTokenFromCanvas() {
-        //$ltiAgs = (array) $this->launchValues['https://purl.imsglobal.org/spec/lti-ags/claim/endpoint'];
+    /**
+    * Retrieve oauth token from Canvas so we can make requests to assignment/grading and memberships/roles services
+    *
+    * @return string $oauthToken
+    */
+
+    public function getOauthTokenFromCanvas()
+    {
         $this->iss = $this->getIssuer();
         $this->oauthTokenEndpoint = $this->iss . '/login/oauth2/token';
         //send JWT to get oauth token
@@ -320,7 +386,19 @@ class LTIAdvantage {
         return $oauthToken;
     }
 
-    public function initOauthToken() {
+    /**
+    * Prepare oauth token before issuing a request to assignment/grade or membership/role services.
+    * If the oauth token has previously been retrieved and is still valid, retrieve from cache.
+    * If there is no oauth token in the cache (they expire every 60 minutes), retrieve from Canvas.
+    * Note that a single oauth token is all that is needed for the entire app and can be used for
+    * all users, courses, and LTI Advantage services.
+    *
+    * @param  string $response
+    * @return void
+    */
+
+    public function initOauthToken()
+    {
         $oauthToken = null;
         //issuer can be canvas prod, beta, or test; we will have the issuer if the oauth token
         //is being retrieved on an initial LTI launch, but might not have it for later requests.
@@ -342,7 +420,20 @@ class LTIAdvantage {
         return $oauthToken;
     }
 
-    public function postScore($lineItemUrl, $userId, $activityProgress, $gradingProgress, $scoreGiven = null, $scoreMaximum = 1) {
+    /**
+    * Post a line item score for a student
+    *
+    * @param  string $lineItemUrl
+    * @param  int    $userId
+    * @param  string $activityProgress
+    * @param  string $gradingProgress
+    * @param  int    $scoreGiven
+    * @param  int    $scoreMaximum
+    * @return []     $data (data converted to associative array from JSON)
+    */
+
+    public function postScore($lineItemUrl, $userId, $activityProgress, $gradingProgress, $scoreGiven = null, $scoreMaximum = 1)
+    {
         $this->initOauthToken();
         $currentTime = new DateTime();
         $timestamp = $currentTime->format(DateTime::ATOM); //ISO8601
@@ -371,11 +462,26 @@ class LTIAdvantage {
         return $data;
     }
 
-    public function setOauthToken($oauthToken) {
+    /**
+    * Set oauth authorization bearer header on the class to be used in requests to Canvas
+    *
+    * @param  string $oauthToken
+    * @return void
+    */
+
+    public function setOauthToken($oauthToken)
+    {
         $this->oauthHeader = ['Authorization: Bearer ' . $oauthToken];
     }
 
-    public function isLtiAdvantageRequest() {
+    /**
+    * Determine if the launch is the correct LTI version
+    *
+    * @return bool
+    */
+
+    public function isLtiAdvantageRequest()
+    {
         $ltiVersion = $this->launchValues['http://imsglobal.org/lti/version'];
         if ($ltiVersion != 'LTI-1p3') {
             abort(500, 'Invalid launch: LTI 1.3 required.');
@@ -383,6 +489,13 @@ class LTIAdvantage {
 
         return true;
     }
+
+    /**
+    * Validate and decode launch JWT; ensure state, nonce, registration, and LTI message type are valid;
+    * also initialize oauth token so it can be used in requests to Canvas
+    *
+    * @return void
+    */
 
     public function validateLaunch()
     {
@@ -393,7 +506,17 @@ class LTIAdvantage {
         $this->initOauthToken();
     }
 
-    private function getPublicKey() {
+    /**
+    * Get Canvas's public key from the rotating JWK set; we cache this value so we don't need to
+    * send requests to Canvas on every single LTI launch. It looks like things are generally
+    * rotated every month with Canvas, but we refresh every week to be safer. This public key
+    * is needed to decode the JWT that Canvas sends us on launch.
+    *
+    * @return string
+    */
+
+    private function getPublicKey()
+    {
         //fetch revolving keys with KID
         $launchKID = $this->jwtHeader['kid'];
         $publicKey = Cache::get($launchKID);
@@ -421,8 +544,16 @@ class LTIAdvantage {
 
         return $this->publicKey;
     }
+    /**
+    * Send a cURL GET request
+    *
+    * @param  string $url
+    * @param  []     $tokenHeader
+    * @return string
+    */
 
-    private function curlGet($url, $tokenHeader) {
+    private function curlGet($url, $tokenHeader)
+    {
         $ch = curl_init($url);
         curl_setopt ($ch, CURLOPT_URL, $url);
         curl_setopt ($ch, CURLOPT_HTTPHEADER, $tokenHeader);
@@ -457,6 +588,13 @@ class LTIAdvantage {
         return $result;
     }
 
+    /**
+    * Split header and body of JSON response when sending requests to Canvas services and return data in body
+    *
+    * @param  string $jsonResponse
+    * @return []
+    */
+
     private function getResponseBody($jsonResponse)
     {
         if (!$jsonResponse) {
@@ -475,16 +613,17 @@ class LTIAdvantage {
         return $responseBody;
     }
 
+    /**
+    * Get an RSA key (either public or private) that we previously generated for our app on setup
+    * from the .env file in order to send JWTs to Canvas (such as retrieving oauth token or deep linking)
+    *
+    * @param  string $envVar
+    * @return string
+    */
+
     private function getRsaKeyFromEnv($envVar) {
         $initialValue = env($envVar);
-        //dd(base64_decode($initialValue));
-        //return base64_decode($initialValue);
-        //$initialValue = base64_decode($initialValue);
-        #source for this tomfoolery:
-        #https://laracasts.com/discuss/channels/general-discussion/multi-line-environment-variable
-        //$parsedValue = str_replace('\\n', "\n", $initialValue);
         $parsedValue = str_replace('\n', '', $initialValue);
-        //dd($parsedValue);
         return $parsedValue;
     }
 
@@ -539,6 +678,12 @@ class LTIAdvantage {
         return false;
     }
 
+    /**
+    * Validate that the LTI launch type is 1.3
+    *
+    * @return void
+    */
+
     private function validateMessage()
     {
         if ($this->launchValues['https://purl.imsglobal.org/spec/lti/claim/version'] !== "1.3.0") {
@@ -549,6 +694,12 @@ class LTIAdvantage {
             abort(400, 'LTI launch failed: no message type provided.');
         }
     }
+
+    /**
+    * Validate that the issuer in the JWT is Canvas and the audience is our app
+    *
+    * @return void
+    */
 
     private function validateRegistration()
     {
@@ -564,6 +715,13 @@ class LTIAdvantage {
             abort(400, 'LTI launch failed: invalid aud value.');
         }
     }
+
+    /**
+    * Validate that the state and nonce in the launch JWT match our cached values to prevent unauthorized launches
+    * (we created and cached these values before doing the OIDC redirect and should receive them back again after)
+    *
+    * @return void
+    */
 
     private function validateStateAndNonce()
     {

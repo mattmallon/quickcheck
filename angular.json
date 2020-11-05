@@ -24,6 +24,10 @@
             "tsConfig": "tsconfig.app.json",
             "deployUrl": "/assets/dist/",
             "aot": true,
+            "allowedCommonJsDependencies": [
+              "moment-timezone",
+              "angular-svg-round-progressbar"
+            ],
             "assets": [
               {
                 "glob": "**/*",

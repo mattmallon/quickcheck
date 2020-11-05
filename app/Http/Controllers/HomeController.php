@@ -1,13 +1,7 @@
 <?php
 use Illuminate\Http\Request;
-use App\Classes\LTI\LtiContext;
-use App\Classes\LTI\LTIAdvantage;
-use App\Models\Student;
-use App\Models\User;
-use App\Classes\LTI\LtiConfig;
 use App\Classes\Auth\CASFilter;
 use App\Classes\Auth\AuthFilter;
-use Illuminate\Support\Facades\Cache;
 
 class HomeController extends BaseController
 {
@@ -57,32 +51,5 @@ class HomeController extends BaseController
         else {
             abort(403, 'Unauthorized: please launch the tool from an external tool launch in Canvas.');
         }
-    }
-
-    /**
-    * TODO: probably need a new LTI controller now that all these new endpoints are getting added
-    * Receive platform's OIDC initialization request and redirect back
-    *
-    * @return redirect
-    */
-
-    public function initializeOIDC(Request $request)
-    {
-        $lti = new LTIAdvantage();
-        $redirectUrl = $lti->buildOIDCRedirectUrl();
-        return redirect($redirectUrl);
-    }
-
-    /**
-    * Return LTI config information for LTI installation
-    *
-    * @return response (json)
-    */
-
-    public function returnLtiConfig()
-    {
-        $ltiConfig = new LtiConfig();
-        $configFile = $ltiConfig->createConfigFile();
-        return response()->json($configFile, 200);
     }
 }

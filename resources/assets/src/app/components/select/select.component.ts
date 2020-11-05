@@ -32,8 +32,8 @@ export class SelectComponent implements OnInit {
   constructor(
   public utilitiesService: UtilitiesService,
   public authService: AuthService,
-  private userService: UserService,
-  private collectionService: CollectionService
+  public userService: UserService,
+  public collectionService: CollectionService
   ) {
     this.apiToken = this.authService.getInstructorTokenFromStorage();
     this.userService.setApiToken(this.apiToken);
