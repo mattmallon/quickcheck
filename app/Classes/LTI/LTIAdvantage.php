@@ -132,8 +132,8 @@ class LTIAdvantage {
             "type" => "ltiResourceLink",
             "title" => $title,
             "url" => $launchUrl,
-            "presentation" => [
-                "documentTarget" => "iframe"
+            "iframe" => [
+                "height" => 700
             ]
         ];
 
