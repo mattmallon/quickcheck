@@ -133,6 +133,7 @@ class LTIAdvantage {
             "title" => $title,
             "url" => $launchUrl,
             "iframe" => [
+                "width" => 800,
                 "height" => 700
             ]
         ];
