@@ -25,9 +25,11 @@ phases:
       - printf '[{"name":"elearn-qc-dev-server","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitionsserver.json
       - printf '[{"name":"elearn-qc-dev-artisan","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitionsartisan.json
       - printf '[{"name":"elearn-qc-reg-server","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitionsserverreg.json
+      - printf '[{"name":"elearn-qc-dev-server","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitionsserverpreview.json
       - echo Finish post build tasks
 artifacts:
     files:
       - imagedefinitionsserver.json
       - imagedefinitionsartisan.json
       - imagedefinitionsserverreg.json
+      - imagedefinitionsserverpreview.json
