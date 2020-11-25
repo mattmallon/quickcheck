@@ -190,7 +190,7 @@ class LTIAdvantage {
     {
         $rawJwt = $this->request->get('id_token');
         if (!$rawJwt) {
-            abort(400, 'LTI launch error: JWT id token missing.');
+            abort(400, 'LTI launch error: JWT id token missing. The most likely cause is third party cookies being blocked in this browser. You may need to change your browser settings or use a different browser where third party cookies are allowed.');
         }
 
         $splitJwt = explode('.', $rawJwt);
