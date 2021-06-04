@@ -36,7 +36,7 @@
     "es-abstract": "^1.14.2",
     "font-awesome": "~4.6.3",
     "jquery": "^3.5.1",
-    "lodash": "^4.17.20",
+    "lodash": "^4.17.21",
     "mathquill": "^0.10.1-a",
     "moment-timezone": "^0.5.27",
     "ngx-bootstrap": "^6.1.0",
